@@ -1,4 +1,7 @@
-#define NOTE_MODE 0
+#define NOTE_MODE 1
+#define CHAPTER 6
+
+
 #if NOTE_MODE
 #include<Windows.h>
 #include<tchar.h>
@@ -24,7 +27,7 @@ using namespace DirectX;
 
 namespace note {
 
-	class note
+	class Note
 	{
 	public:
 		void main();
@@ -32,7 +35,10 @@ namespace note {
 	private:
 	};
 
-	note::main()
+#pragma region CHAPTER5
+#if CHAPTER == 5
+
+	void Note::main()
 	{
 		// GPU側のメモリ領域を確保するためのオブジェクト
 		ID3D12Resource object;
@@ -1915,12 +1921,32 @@ namespace note {
 
 	// 他のd3dx12.hの利用例
 	// ID3D12GraphicsCommandList::CopyTextureRegion()メソッドを利用した転送→UpdateSubresource()
+#endif
+#pragma endregion
 
-	
+#pragma region CHAPTER6
+// 行列による座標変換
+#if CHAPTER  == 6
+
+
+
+#endif
+#pragma endregion
 
 
 
 
+
+
+
+
+#pragma region CHAPTERX
+// テンプレート
+#if CHAPTER  == -1
+
+
+#endif
+#pragma endregion
 
 }
 

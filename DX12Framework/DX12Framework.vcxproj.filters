@@ -10,5 +10,6 @@
     <ClCompile Include="main.cpp">
       <Filter>entryPoint</Filter>
     </ClCompile>
+    <ClCompile Include="note.cpp" />
   </ItemGroup>
 </Project>
