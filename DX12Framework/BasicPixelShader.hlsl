@@ -1,6 +1,6 @@
-#include "BasicType.hlsli"
-Texture2D<float4> tex:register(t0);		//0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒeƒNƒXƒ`ƒƒ
-SamplerState smp:register(s0);			//0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒTƒ“ƒvƒ‰
+ï»¿#include "BasicType.hlsli"
+Texture2D<float4> tex:register(t0);		//0ç•ªã‚¹ãƒ­ãƒƒãƒˆã«è¨­å®šã•ã‚ŒãŸãƒ†ã‚¯ã‚¹ãƒãƒ£
+SamplerState smp:register(s0);			//0ç•ªã‚¹ãƒ­ãƒƒãƒˆã«è¨­å®šã•ã‚ŒãŸã‚µãƒ³ãƒ—ãƒ©
 
 float4 BasicPS(BasicType input) : SV_TARGET{
 	return float4(tex.Sample(smp,input.uv));

@@ -1,4 +1,4 @@
-#define NOTE_MODE 1
+#define NOTE_MODE 0
 #define CHAPTER 6
 
 
@@ -1928,6 +1928,490 @@ namespace note {
 // 行列による座標変換
 #if CHAPTER  == 6
 
+	void Note::main()
+	{
+
+		// 行列の基本
+		//TITLE: 座標変換操作の順番
+		// 座標変換、基本的に行列の乗算を用いて計算する
+		// 行列の乗算なので、計算の順序が重要
+		//１．回転して平行移動する
+		// （平行移動）（回転）
+		//２．平行移動してから回転する
+		// （回転）（平行移動）
+
+		// 回転は「原点中心」
+		// 座標変換における回転は必ず「原点中心」です
+		
+		//TITLE:行優先と列優先
+		// DirectXプログラミングで行列を扱う際には行優先と列優先に気を付けておかなればなりません。
+		// ベクトルを行列で表す場合、ベクトルは行列が縦か横だけに並んでいるものを表すことができ、
+		// 1 × n もしくは n × 1 の状態になっている「行列の一形態」といえる
+		// 行優先/列優先では、そのベクトルの向きが重要になる
+		// 列優先では、ベクトルを
+		// (x)
+		// (y)
+		// (z)
+		// と表します
+
+		// 行優先ではベクトルを横に表記する（1×n）形式だといえる
+		// (x y z)
+		// と表す
+
+		// ベクトル（座標）に対して行列で変換をかける場合の乗算の向きが変わってくる
+		
+		// 列優先の場合
+		// (a b c) (x)   (x')
+		// (d e f) (y) = (y')
+		// (g h i) (z)   (z')
+		// のように、左に乗算すべき行列が来ることで変換後の座標が得られる
+		// 行列同士も左へ左へと乗算していく。
+		
+		// 列優先の場合
+		//          (a b c)
+		// (x y z)  (d e f) =  (x' y' z')
+		//          (g h i)
+		// となるため、乗算すべき行列を右から掛けることになる
+		// 行列同士の演算も右へ右へと乗算していく
+
+		// この違いは重要
+		// 特にDirectXでは、C++でXMMATRIX構造体を扱っているときは列優先となり、
+		// HLSLで乗算する際には行優先となる
+
+		//TITLE: XMMATRIX構造体
+		// DirectX12において、行列はXMMATRIX構造体（DirextXMathライブラリ）を使用して表現する
+		// XMMATRIX構造体の演算は行優先であるため、右方向に乗算していく
+
+		// 基本は4x4
+		// なお、DirectX（DirectXMath）ではSIMD演算を行うため、行列の乗算といえ4x4行列（XMMATRIX）同士の乗算
+		// もしくは4x4行列（XMMATRIX）と４要素ベクトル（XMVECTOR）の乗算となる
+
+		// y軸を中心とした回転を行うにはXMMatrixRotationY()関数を使用し、
+		// 平行移動を行うにはXMMatrixTranslation()を使用する
+		// もし、回転してから平行移動をする場合は、
+
+		XMMatrixRotationY(XM_1DIV2PI) * XMMatrixTranslation(1, 2, 3);
+
+		// 平行移動してから回転する
+
+		XMMatrixTranslation(1, 2, 3)* XMMatrixRotationY(XM_1DIV2PI);
+
+		// HLSLは行優先
+		// シェーダー（HLSL）では行優先のため順序が逆です
+
+		//TITLE: 定数バッファーとシェーダーからの利用
+		// CPUで設定した行列は、GPU側にどのように転送されるか
+		// 行列は、これまで出てきたような頂点でもテクスチャでもない
+		// 「定数データ」として「定数バッファー」を介してGPU側に転送される
+		// 定数バッファーの利用手順
+		//１．定数バッファーを作る
+		//２．定数バッファーの中身をマップで書き換える
+		//３．定数バッファービューをディスクリプタヒープの追加する
+		//４．ルートシグネチャに定数バッファー参照用のレンジ設定を追加する
+		//５．シェーダーから利用する
+
+		//TITLE: 定数バッファーの作成
+		// バッファー自体の作り方は頂点バッファーのときと同じ
+		// マップで中身を書き換える必要があるので、D3D12_HEAP_TYPE_UPLOADとして設定する
+		// バッファー（ID3D12Resourceオブジェクト）の作成はID3D12Device::CreateCommittedResource()メソッドで行う
+
+		// 定数バッファー作成
+		ID3D12Resource* constBuff = nullptr;
+		ID3D12Device* _dev;
+		_dev->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(256/*必要なバイト数を256アライメントしたバイト数*/),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&constBuff)
+		);
+
+		// DirectX12では「定数バッファーのアライメントは256バイトでなければならない」
+		// なぜか
+		// ＧＰＵを効率よく使用するための仕様
+		
+		// 単位行列を転送する
+		XMMATRIX matrix = XMMatrixIdentity();
+
+		// 定数バッファー作成
+		ID3D12Resource* constBuff = nullptr;
+
+		_dev->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer((sizeof(matrix) + 0xff) & ~0xff),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&constBuff)
+		);
+
+		// 256アライメントの計算
+		// 第３引数の計算が「256の倍数にする」という演算です
+		
+		size + (256 - size % 256);
+
+		// size = 50の場合
+
+		50 + (256 - 50 % 256);
+
+		50 + (256 - 50);
+
+		50 + 206;
+		
+		256;
+
+		// size = 260の場合
+
+		260 + (256 - 260 % 256);
+
+		260 + (256 - 4);
+
+		260 + 252;
+
+		512;
+
+		// 第３引数の式の場合
+
+		(size + 0xff) & ~0xff;
+
+		// 0xff = 256;
+		// つまり末尾8ビットがすべて1になっている数
+		// ~はビット反転を表す演算子（ビットNOT演算子）
+		// ~0xffは、末尾８ビットがすべて０で他はすべて１の値となります
+		// 二進法だと
+		// 1111 1111 1111 1111 1111 1111 1111 0000 0000
+		// この値と&（AND）演算を行っているため、末尾８ビットがすべて０になり256の倍数になる
+
+		//TITLE:マップによる定数のコピー
+		// D3D12_HEAP_TYPE_UPLOADでバッファーを作っているのでマップできます
+		// ひとまずアンマップの必要はないので、中に行列を書き込む
+
+		XMMATRIX* mapMatrix;	// マップ先を示すポインター
+		result = constBuff->Map(0, nullptr, (void**)&mapMatrix);	// マップ
+		*mapMatrix = matrix;	// 行列の内容をコピー
+
+		// 代入演算子が使える
+		// 「コピーなのでmemcpyを使う」ことなく代入演算子を使うこともできる
+
+		//TITLE: 定数バッファービュー（CBV）
+		// テクスチャをシェーダーから見えるようにするためには
+		// ・ディスクリプタヒープを作り、
+		// ・その中にビュー定義し、
+		// ・スロットの割り当てもルートシグネチャで記述する
+		// としますが、定数バッファーでも同様に、記述します
+		// ディスクリプタヒープ自体は新しく作らなくても、テクスチャ用に作ったものを共用できる
+		// ルートパラメーターも、ディスクリプタレンジをもう１つ追加するだけでよい
+
+		//TITLE: ディスクリプタヒープを書き換える
+		// テクスチャのために作ったディスクリプタヒープを書き換える
+		ID3D12DescriptorHeap* texDescHeap = nullptr;
+
+		D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+
+		// シェーダ―から見えるように
+		descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+		// マスクは０
+		descHeapDesc.NodeMask = 0;
+
+		// ビューは今のところ１つだけ
+		descHeapDesc.NumDescriptors = 1;
+
+		// ディスクリプタヒープの種別
+		descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+		// 生成
+		result = _dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&texDescHeap));
+
+		// 変数名をかえる
+		// 今のままではテクスチャ用に特化しているように見えるので「基本的な情報の受け渡し」としてbasicDescHeapという変数名にする
+		// NumDescriptorメンバーを、テクスチャビュー(SRV)と定数バッファービューの２つ必要、ということで１から２にする
+
+		ID3D12DescriptorHeap* basicDescHeap = nullptr;
+
+		D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+
+		// シェーダ―から見えるように
+		descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+		// マスクは０
+		descHeapDesc.NodeMask = 0;
+
+		// SRV1つとCBV1つ
+		descHeapDesc.NumDescriptors = 2;
+
+		// ディスクリプタヒープ種別
+		descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+		// 生成
+		result = _dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&basicDescHeap));
+
+		// NumDescriptorsメンバーの変更により、ディスクリプタヒープ内の「ビュー置き場」の数が２つになりました。
+		// 次は、シェーダーリソースビューのあとに定数バッファービューを追加する
+
+		//TITLE: 定数バッファービューの生成
+		// シェーダ―リソースビュー生成部分は、
+		// ID3D12Device::CreateConstantBufferView()メソッドを呼び出して、定数バッファービューを生成します
+		
+		_dev->CreateShaderResourceView(texbuff,	// ビューと関連付けるバッファー
+			&srvDesc,	// 先ほど設定したテクスチャ設定情報
+			basicDescHeap->GetCPUDescriptorHandleForHeapStart()	// ヒープ内の配置位置
+			);
+
+		// ID3D12Device::CreateConstantBufferView()
+		void CreateConstantBufferView(
+			const D3D12_CONSTANT_BUFFER_VIEW_DESC* pDesc,	// 定数バッファービュー設定
+			D3D12_CPU_DESCRIPTOR_HANDLE DestDescriptor		// ビュー配置すべき場所の情報（ハンドル）
+		);
+
+		// 第１引数（定数バッファービューの設定）は、グラフィックスメモリ上のアドレスとそのサイズを渡せばよい
+		// バッファーのアドレスは、すでに定数バッファー用に作ったバッファー(constBuff)のGetGPUVirtualAddress()メソッド
+		// を使用して取得。バッファーのサイズもGetDesc().Widthで得られる
+		// 第２引数（ビューを配置すべき場所の情報）はD3D12_CPU_DESCRIPTOR_HANDLEという構造体
+		// この構造体はptrというメンバー持っており、それが配置すべきアドレスを指している
+
+		// ディスクリプタヒープ上にシェーダーリソースビューと定数バッファービューを設定する場合、
+		// 連続したメモリとして配置する
+		// ディスクリプタヒープ内のビューとしてはシェーダーリソースビューも定数バッファービューも同じ大きさであり、
+		// かつ決められた大きさとなる
+
+		// シェーダ―リソースビューを設定するときに用いたID3D12DescriptorHeap::GetCPUDescriptorHandleForHeapStart()メソッドは、
+		// ビューを配置すべき先頭アドレスが入ったハンドルを返す
+		// そのうえで定数バッファービューの配置アドレスを知るために、ビュー情報一つあたりの大きさがわかればオフセットできる
+		// この大きさ（インクリメントサイズ）を知るための関数がID3D12Device::GetDescriptor::GetDescriptorHandleIncrementSize()メソッド
+		
+		// ビュー情報１つあたりの大きさは、
+		// ・シェーダーリソースビュー（SRV）
+		// ・定数バッファービュー（CBV）
+		// ・アンノーダードアクセスビュー（UAV）
+		// の３つは同じとなっている
+
+		// レンダーターゲットビューおよび深度ステンシルビューの大きさはそれらとは異なるので、注意
+
+		// ID3D12Device::GetDescriptorHandleIncrementSize()メソッドの引数に定義済みの定数を渡すことで
+		// インクリメントサイズが得られる
+		// 今回はCBVなので、引数にはD3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAVを使用する
+
+		// ID3D12DescriptroHeap::GetCPUDescriptorHandleForHeapStart()メソッドが返すハンドルを取得
+
+		auto basicHeapHandle = basicDescHeap->GetCPUDescriptorHandleForHeapStart();
+
+		// 取得したbasicHeapHandleは、ディスクリプタヒープの先頭、つまりシェーダーリソースビューの位置を示す
+		// そこで、このハンドルのptrメンバーを大きさ分だけインクリメントする
+
+		basicHeaphandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		// basicHeapHandleが定数バッファービューのあるべき場所を示すようになりました
+		// シェーダ―リソースビュー作成と定数バッファービュー作成をまとめて書く
+
+		// ディスクリプタの先頭ハンドルを取得して置く
+		auto basicHeapHandle = basicDescriptor->GetCPUDescriptorHandleForHeapStart();
+
+		// シェーダ―リソースビューの作成
+		_dev->CreateShaderResourceView(
+			texbuff,			// ビューと関連付けるバッファー
+			&srvDesc,			// 先ほど設定したテクスチャ設定情報
+			basicHeapHandle		// 先頭の場所を示すハンドル
+		);
+
+		// 次の場所に移動
+		basicHeapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+
+		cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = constBuff->GetDesc().Width;
+
+		// 定数バッファービューの作成
+		_dev->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
+
+		//TITLE: ルートシグネチャの変更
+		// ディスクリプタレンジの設定を変更する
+		
+		//変更前
+		{
+			D3D12_DESCRIPTOR_RANGE descTblRange = {};
+
+			descTblRange.NumDescriptors = 1;	// テクスチャ１つ
+			descTblRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
+			descTblRange.BaseShaderRegister = 0;	// 0番スロットから
+			descTblRange.OffsetInDescriptorFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		}
+
+		// 必要なレンジ数が増えたため、配列にして定数レジスター用の設定を書く
+		{
+			D3D12_DESCRIPTOR_RANGE descTblRange[2] = {};	// テクスチャと定数の２つ
+
+			// テクスチャ用レジスター０番
+			descTblRange[0].NumDescriptors = 1;	// テクスチャ１つ
+			descTblRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
+			descTblRange[0].BaseShaderRegister = 0;	// 0番スロットから
+			descTblRange[0].OffsetInDescriptorFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			// 定数用レジスター０番
+			descTblRange[1].NumDescriptors = 1;	// 定数１つ
+			descTblRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	// 種別は定数
+			descTblRange[1].BaseShaderRegister = 0;	// 0番スロットから
+			descTblRange[1].OffsetInDescriptorFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+			// レジスター番号が重複していても大丈夫か？
+			// レジスター番号が重複しても問題ありません。
+			// レジスターの種別が違う場合、レジスターは別の場所にあり、それぞれの場所で明確に分けられています。
+
+		}
+
+		// ルートパラメータ
+		{
+			D3D12_ROOT_PARAMETER rootparam = {};
+
+			rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+
+			// ディスクリプタレンジのアドレス
+			rootparam.DescriptorTable.pDescriptorRanges = descTblRange;
+
+			// ディスクリプタレンジ数
+			rootparam.DescriptorTable.NumDescriptorRanges = 1;
+
+			// ピクセルシェーダーから見える
+			rootparam.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+		}
+
+		// 最後に設定しているShaderVisibilityメンバーを見ると、「ピクセルシェーダーから見える」
+		// 設定になっている
+		// 今回作成する定数（行列）は「頂点の座標変換」に用いるものなので、ピクセルシェーダーではなく、頂点シェーダーから見えるようにしないといけない
+		// ルートパラメータを分けて設定する
+		// D3D12_SHADER_VISIBLITY_ALLという指定もある
+
+		D3D12_ROOT_PARAMETER rootparam[2] = {};
+
+		rootparam[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootparam[0].DescriptorTable.pDescriptorRanges = &descTblRange[0];
+		rootparam[0].DescriptorTable.NumDescriptorRanges = 1;
+		rootparam[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+		rootparam[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootparam[1].DescriptorTable.pDescriptorRanges = &descTblRange[1];
+		rootparam[1].DescriptorTable.NumDescriptorRanges = 1;
+		rootparam[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+
+		// ルートパラメータが２つになったので、rootSignatureDesc.NumParametersも2にする
+
+		rootSignatureDesc.NumParameters = 2;	// ルートパラメーター数
+
+		//TITLE: 頂点シェーダーからの定数バッファー（行列）の参照
+		// 頂点シェーダーから定数バッファーを参照して、それを頂点シェーダーからの座標変換に使用する
+
+		// 定数の参照を記述する
+		Texture2D<float4> tex : register(t0);	// 0番スロットに設定されたテクスチャ
+		SamplerState smp : register(s0);		// 0番スロットに設定されたサンプラー
+
+		// 定数バッファー
+		cbuffer cbuff0 : register(b0)
+		{
+			matrix mat;	// 変換行列
+		};
+
+		// cbufferとは定数バッファーをまとめるためのキーワード
+		// 基本的に、CPU側からの情報はまとめてバイト列として特定のスロットに割り当てられ、
+		// シェーダ―側で利用される
+		// グローバル定数が複数であっても１つのバッファーとしてまとめて定義する
+		// 一見すると記法は構造体のようだが、実際にはただ単に、１つのレジスターと対応関係を持たせるためにまとめているだけ
+		// 対応するレジスターを示すのがregister指定子
+		// CPU側における「スロット番号」は、GPU側では「レジスター番号」に対応
+		// register指定子でスロット番号とレジスター番号を対応させ、その中身をcbufferで定義している
+		// 定数レジスターなので、定数レジスター(b)の0番と行列定数を対応させる
+		// なお、Shader Model5.1以降では、
+		struct Matrix
+		{
+			matrix mat;	// 変換行列
+		};
+
+		ConstantBuffer<Matrix> m : register(b0);
+
+		// のように、C++のテンプレートに似た記法を使い、構造体をまとめてConstantBufferとして定義することも可能
+
+		// 定数バッファーのレジスターは「b」
+		// c0ではない
+		// 「コンスタント（定数）」だからcと思いがちだが、b
+		// cは、バッファーオフセットとして使用される
+
+		// 定数を利用する
+		//頂点シェーダーでmatを参照すれば、行列を使うことができる
+		// 早速頂点シェーダー内部でmatを使用する
+		// 頂点座標に対してmatを乗算することで、頂点座標を行列で変換できる
+		output.svpos = mul(mat, pos);
+
+		// シェーダ―での行列演算は列優先であるため、左方向にかける
+		// 座標に対して左に行列を置く形で乗算する
+		// *演算子ではなくmul()関数を使う
+		
+
+		//TITLE: ルートパラメーターとディスクリプタヒープのバインド指定
+		//ルートパラメーターとディスクリプタヒープを指定する
+		// シェーダ―リソースビュー用の指定（ルートパラメーター番号0番、ディスクリプタヒープは先頭）は以下の通り
+		_cmdList->SetGraphicsRootDescriptorTable(0, basicDescHeap->GetGPUDescriptorHandleForHeapStart());
+
+		// ルートパラメーター番号１に対して、ディスクリプタヒープの次の場所を対応付け（バインド）する
+		// 対応付けの方法は、ビューと作ったときと同様、ハンドルのprtメンバーをID3D12Device::GetDescriptorHandleIncrementSize()メソッドで
+		// オフセットさせる
+
+		auto heapHandle = basicDescHeap->GetGPUDescriptorHandleForHeapStart();
+		heapHandle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		_cmdList->SetGraphicsRootDescriptorTable(1, heapHandle);
+
+		//TITLE: D3D12_SHADER_VISIBILITY_ALL指定
+		// この指定を使ってルートパラメーターを全シェーダ―から参照可能にすると、実装がシンプルになる
+		// シェーダ―リソースと定数バッファーを同一ルートパラメーターとして扱うことで、
+		// ルートパラメーターとディスクリプタヒープのバインドが１回だけで済むようになる
+		
+		// シェーダ―リソースビューと定数バッファービューが連続しており、レンジも連続しているため
+		// ルートパラメーター１つに対して「レンジが２つ」という指定を行えば、いっぺんに２つのレジスター設定ができ、切替コストも軽減できる
+		// ルートパラメーターを１本化して、記述する
+		{
+			D3D12_ROOT_PARAMETER rootparam = {};
+			rootparam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+
+			// 配列先頭アドレス
+			rootparam.DescriptorTable.pDescriptorRanges = descTblRange;
+
+			// ディスクリプタレンジ数
+			rootparam.DescriptorTable.NumDescriptorRanges = 2;
+
+			// すべてのシェーダーから見える
+			rootparam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		}
+
+		// こうすると、次のようにID3D12GraphicsCommandList::SetGraphicsRootDescriptorTable()メソッドの呼び出しが１回で済む
+
+		_cmdList->SetGraphicsRootDescriptorTable(0, basicDescHeap->GetGPUDescriptorHandleForHeapStart());
+
+		//TITLE: 行列を変更する(2D編)
+		// 2D座標系のピクセルを指定して、画面上に画像を表示する行列を作る
+		
+		//TITLE: 2D座標の変換行列
+		// 画面、つまりクライアント（ビューポート）のサイズがいくつあろうとも、-1～1の範囲で表される
+		// 最初に特定のサイズを指定したにもかかわらず、左上は(-1,1)、右下は(1,-1)となってしまい、ピクセル単位の指定が難しくなる
+
+		// 無理矢理にでもピクセル指定をする方法を考える
+		// 画面のサイズ1280×720であると仮定する
+
+		//１．(0,0)から(-1,1)への変換
+		//２．(1280,720)から(1,-1)への変換
+		//３．(1280/2,720/2)から(0,0)への変換
+
+		// 連立１次方程式
+		// 
+
+
+
+
+
+
+
+
+
+
 
 
 #endif
@@ -1951,3 +2435,4 @@ namespace note {
 }
 
 #endif // NOTE_MODE
+

@@ -1,6 +1,6 @@
-//’¸“_ƒVƒF[ƒ_¨ƒsƒNƒZƒ‹ƒVƒF[ƒ_‚Ö‚Ì‚â‚èŽæ‚è‚ÉŽg—p‚·‚é
-//\‘¢‘Ì
+ï»¿//é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€â†’ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ã¸ã®ã‚„ã‚Šå–ã‚Šã«ä½¿ç”¨ã™ã‚‹
+//æ§‹é€ ä½“
 struct BasicType {
-	float4 svpos:SV_POSITION;	// ƒVƒXƒeƒ€—p’¸“_À•W
-	float2 uv:TEXCOORD;			// UV’l
+	float4 svpos:SV_POSITION;	// ã‚·ã‚¹ãƒ†ãƒ ç”¨é ‚ç‚¹åº§æ¨™
+	float2 uv:TEXCOORD;			// UVå€¤
 };
