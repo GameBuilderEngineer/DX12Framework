@@ -1,7 +1,18 @@
-ï»¿#include "BasicType.hlsli"
-Texture2D<float4> tex:register(t0);		//0ç•ªã‚¹ãƒ­ãƒƒãƒˆã«è¨­å®šã•ã‚ŒãŸãƒ†ã‚¯ã‚¹ãƒãƒ£
-SamplerState smp:register(s0);			//0ç•ªã‚¹ãƒ­ãƒƒãƒˆã«è¨­å®šã•ã‚ŒãŸã‚µãƒ³ãƒ—ãƒ©
+#include "BasicType.hlsli"
+Texture2D<float4> tex:register(t0);		//0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒeƒNƒXƒ`ƒƒ
+SamplerState smp:register(s0);			//0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒTƒ“ƒvƒ‰
+
+//’è”ƒoƒbƒtƒ@
+cbuffer cbuff0 : register(b0) {
+	matrix world;		// ƒ[ƒ‹ƒh•ÏŠ·s—ñ
+	matrix viewproj;	// ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ
+};
 
 float4 BasicPS(BasicType input) : SV_TARGET{
-	return float4(tex.Sample(smp,input.uv));
+	float3 light = normalize(float3(1,-1,1));
+	float brightness = dot(-light, input.normal);
+
+	return float4(brightness,brightness,brightness,1);
+	//return float4(input.normal.xyz,1);
+	//return float4(tex.Sample(smp,input.uv));
 }

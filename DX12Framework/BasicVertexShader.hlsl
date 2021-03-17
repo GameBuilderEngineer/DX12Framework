@@ -1,14 +1,25 @@
-ï»¿#include"BasicType.hlsli"
+#include"BasicType.hlsli"
+Texture2D<float4> tex:register(t0);	// 0”ÅƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒeƒNƒXƒ`ƒƒ
+SamplerState smp:register(s0);		//0”ÔƒXƒƒbƒg‚Éİ’è‚³‚ê‚½ƒTƒ“ƒvƒ‰
 
-// å¤‰æ›ã‚’ã¾ã¨ã‚ãŸæ§‹é€ ä½“
+//’è”ƒoƒbƒtƒ@
 cbuffer cbuff0 : register(b0) {
-	matrix mat;//å¤‰æ›è¡Œåˆ—
-}
+	matrix world;	// ƒ[ƒ‹ƒh•ÏŠ·s—ñ
+	matrix viewproj;// ƒrƒ…[ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ
+};
 
-//é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼
-BasicType BasicVS(float4 pos : POSITION,float2 uv:TEXCOORD) {
-	BasicType output;//ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ã¸æ¸¡ã™å€¤
-	output.svpos = mul(mat,pos);
+//’¸“_ƒVƒF[ƒ_[
+BasicType BasicVS(
+	float4 pos : POSITION,
+	float4 normal : NORMAL, 
+	float2 uv:TEXCOORD, 
+	min16uint2 boneno : BONE_NO, 
+	min16uint weight : WEIGHT) 
+{
+	BasicType output;//ƒsƒNƒZƒ‹ƒVƒF[ƒ_‚Ö“n‚·’l
+	output.svpos = mul(mul(viewproj, world), pos);	// ƒVƒF[ƒ_‚Å‚Í—ñ—Dæ‚È‚Ì‚Å’ˆÓ
+	normal.w = 0;	// •½sˆÚ“®¬•ª‚ğ–³Œø‚É‚·‚é
+	output.normal = mul(world, normal);// –@ü‚É‚àƒ[ƒ‹ƒh•ÏŠ·‚ğs‚¤
 	output.uv = uv;
 	return output;
 }
