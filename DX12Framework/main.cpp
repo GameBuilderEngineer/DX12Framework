@@ -53,9 +53,40 @@ IDXGISwapChain4* _swapchain = nullptr;
 
 void EnableDebugLayer() {
 	ID3D12Debug* debugLayer = nullptr;
-	auto result = D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
+	D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
 	debugLayer->EnableDebugLayer();
 	debugLayer->Release();
+}
+
+// D3Dデバイスが保持しているオブジェクト情報を出力
+void ReportD3DObject()
+{
+	if (_dev == nullptr)
+		return;
+	ID3D12DebugDevice* debugDevice = nullptr;
+	auto result = _dev->QueryInterface(&debugDevice);
+	if (SUCCEEDED(result))
+	{
+		debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
+		debugDevice->Release();
+	}
+}
+
+template <class T>
+void safeRelease(T* p)
+{
+	if(p != nullptr)
+		p->Release();
+	p = nullptr;
+}
+
+void releaseResource()
+{
+	safeRelease(_dxgiFactory);
+	safeRelease(_cmdAllocator);
+	safeRelease(_cmdList);
+	safeRelease(_cmdQueue);
+	safeRelease(_swapchain);
 }
 
 #ifdef _DEBUG
@@ -617,6 +648,9 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int) {
 		_swapchain->Present(1, 0);
 
 
+#ifdef _DEBUG
+	ReportD3DObject();
+#endif
 
 	}
 	UnregisterClass(w.lpszClassName, w.hInstance);
