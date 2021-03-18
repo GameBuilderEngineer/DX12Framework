@@ -6,10 +6,11 @@
 #include<dxgi1_6.h>
 #include<DirectXMath.h>
 #include<vector>
-
+#include<map>
 #include<d3dcompiler.h>
 #include<DirectXTex.h>
 #include<d3dx12.h>
+#include<dxgidebug.h>
 
 #ifdef _DEBUG
 #include<iostream>
@@ -22,6 +23,7 @@
 
 
 using namespace DirectX;
+using namespace std;
 
 ///@brief コンソール画面にフォーマット付き文字列を表示
 ///@param format フォーマット
@@ -290,7 +292,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	};
 	char signature[3];
 	PMDHeader pmdheader = {};
-	auto fp = fopen("Model/初音ミク.pmd", "rb");
+	//string strModelPath = "Model/hibiki/hibiki.pmd";
+	//string strModelPath = "Model/satori/satori.pmd";
+	//string strModelPath = "Model/reimu/reimu.pmd";
+	//string strModelPath = "Model/巡音ルカ.pmd";
+	//string strModelPath = "Model/初音ミク.pmd";
+	//string strModelPath = "Model/初音ミクVer2.pmd";
+	//string strModelPath = "Model/初音ミクmetal.pmd";
+	//string strModelPath = "Model/咲音メイコ.pmd";
+	//string strModelPath = "Model/ダミーボーン.pmd";//NG
+	//string strModelPath = "Model/鏡音リン.pmd";
+	//string strModelPath = "Model/鏡音リン_act2.pmd";
+	//string strModelPath = "Model/カイト.pmd";
+	//string strModelPath = "Model/MEIKO.pmd";
+	string strModelPath = "Model/亞北ネル.pmd";
+	//string strModelPath = "Model/弱音ハク.pmd";
+	auto fp = fopen(strModelPath.c_str(), "rb");
 	fread(signature, sizeof(signature), 1, fp);
 	fread(&pmdheader, sizeof(pmdheader), 1, fp);
 
