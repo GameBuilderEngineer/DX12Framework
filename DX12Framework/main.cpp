@@ -866,6 +866,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 
 	// 解放
+	safeRelease(materialDescHeap);
 	safeRelease(materialBuff);
 	safeRelease(basicDescHeap);
 	safeRelease(constBuff);
