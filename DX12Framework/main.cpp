@@ -63,10 +63,10 @@ std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, cons
 	// ファイルのフォルダの区切りは\と/の二種類が使用される可能性があり
 	// ともかく末尾の\か/を得られればいいので、双方のrfindをとり比較する
 	// int型に代入しているのは見つからなかった場合はrfindがepos(-1→0xffffffff)を返すため
-	int pathIndex1 = modelPath.rfind('/');
-	int pathIndex2 = modelPath.rfind('\\');
+	int pathIndex1 = (int)modelPath.rfind('/');
+	int pathIndex2 = (int)modelPath.rfind('\\');
 	auto pathIndex = max(pathIndex1, pathIndex2);
-	auto folderPath = modelPath.substr(0, pathIndex + 1);
+	auto folderPath = modelPath.substr(0, (size_t)pathIndex + 1);
 	return folderPath + texPath;
 }
 
@@ -156,10 +156,10 @@ ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
 
 	result = texbuff->WriteToSubresource(
 		0,
-		nullptr,			// 全領域へコピー
-		img->pixels,		// 元データアドレス
-		img->rowPitch,		// １ラインサイズ
-		img->slicePitch		// 全サイズ
+		nullptr,				// 全領域へコピー
+		img->pixels,			// 元データアドレス
+		(UINT)img->rowPitch,	// １ラインサイズ
+		(UINT)img->slicePitch	// 全サイズ
 	);
 
 	if (FAILED(result))
@@ -537,6 +537,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	fread(&materialNum, sizeof(materialNum), 1, fp);
 	std::vector<Material> materials(materialNum);
 
+	// リソース
+	vector<ID3D12Resource*> textureResources(materialNum);
 
 	// PMDマテリアル情報の読み込み
 	std::vector<PMDMaterial> pmdMaterials(materialNum);
@@ -551,6 +553,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		materials[i].material.specularity	= pmdMaterials[i].specularity;
 		materials[i].material.ambient		= pmdMaterials[i].ambient;
 		materials[i].additional.toonIdx		= pmdMaterials[i].toonIdx;
+
+		if (strlen(pmdMaterials[i].texFilePath) == 0)
+		{
+			textureResources[i] = nullptr;
+		}
+
+		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
+		auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, pmdMaterials[i].texFilePath);
+
+		textureResources[i] = LoadTextureFromFile(texFilePath);
 	}
 
 	fclose(fp);
@@ -616,11 +628,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// マテリアル用ビューの作成
 	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
 	matCBVDesc.BufferLocation	= materialBuff->GetGPUVirtualAddress();	// バッファ―アドレス
-	matCBVDesc.SizeInBytes		= materialBuffSize;						// マテリアルの256アライメントサイズ
+	matCBVDesc.SizeInBytes		= (UINT)materialBuffSize;						// マテリアルの256アライメントサイズ
 	// 先頭を記録
 	auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
 	auto incSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	for (int i = 0; i < materialNum; ++i) {
+	for (unsigned int i = 0; i < materialNum; ++i) {
 		// マテリアル固定バッファビュー
 		_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
 		matDescHeapH.ptr += incSize;
@@ -992,6 +1004,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 
 	// 解放
+	for (auto texResource : textureResources)
+	{
+		safeRelease(texResource);
+	}
 	safeRelease(materialDescHeap);
 	safeRelease(materialBuff);
 	safeRelease(basicDescHeap);
