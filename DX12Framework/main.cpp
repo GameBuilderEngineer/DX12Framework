@@ -100,6 +100,77 @@ std::wstring GetWideStringFromString(const std::string& str)
 	return wstr;
 }
 
+// テクスチャの読み込み
+ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
+	// WICテクスチャのロード
+	TexMetadata metadata = {};
+	ScratchImage scratchImg = {};
+
+	auto result = LoadFromWICFile(
+		GetWideStringFromString(texPath).c_str(),
+		WIC_FLAGS_NONE,
+		&metadata,
+		scratchImg);
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	auto img = scratchImg.GetImage(0, 0, 0);// 生データ抽出
+
+	// WriteToSubresourceで転送する用のヒープ設定
+	D3D12_HEAP_PROPERTIES texHeapProp = {};
+	texHeapProp.Type					= D3D12_HEAP_TYPE_CUSTOM;
+	texHeapProp.CPUPageProperty			= D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+	texHeapProp.MemoryPoolPreference	= D3D12_MEMORY_POOL_L0;
+	texHeapProp.CreationNodeMask		= 0;	// 単一アダプタのため0
+	texHeapProp.VisibleNodeMask			= 0;	// 単一アダプタのため0
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Format				= metadata.format;
+	resDesc.Width				= metadata.width;
+	resDesc.Height				= metadata.height;
+	resDesc.DepthOrArraySize	= metadata.arraySize;
+	resDesc.SampleDesc.Count	= 1;
+	resDesc.SampleDesc.Quality	= 0;
+	resDesc.MipLevels			= static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
+	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;
+
+	// バッファー作成
+	ID3D12Resource* texbuff = nullptr;
+	result = _dev->CreateCommittedResource(
+		&texHeapProp,
+		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
+		&resDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&texbuff)
+	);
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	result = texbuff->WriteToSubresource(
+		0,
+		nullptr,			// 全領域へコピー
+		img->pixels,		// 元データアドレス
+		img->rowPitch,		// １ラインサイズ
+		img->slicePitch		// 全サイズ
+	);
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	return texbuff;
+}
+
+
+
 void EnableDebugLayer() {
 	ID3D12Debug* debugLayer = nullptr;
 	D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
