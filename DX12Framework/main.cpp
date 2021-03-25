@@ -128,14 +128,15 @@ ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
 
 	D3D12_RESOURCE_DESC resDesc = {};
 	resDesc.Format				= metadata.format;
-	resDesc.Width				= metadata.width;
-	resDesc.Height				= metadata.height;
-	resDesc.DepthOrArraySize	= metadata.arraySize;
-	resDesc.SampleDesc.Count	= 1;
-	resDesc.SampleDesc.Quality	= 0;
-	resDesc.MipLevels			= static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
-	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;
+	resDesc.Width				= (UINT64)metadata.width;		// 幅
+	resDesc.Height				= (UINT)metadata.height;		// 高さ
+	resDesc.DepthOrArraySize	= (UINT16)metadata.arraySize;
+	resDesc.SampleDesc.Count	= 1;					// 通常テクスチャなのでアンチエイリアシングしない
+	resDesc.SampleDesc.Quality	= 0;					// クオリティは最低
+	resDesc.MipLevels			= (UINT16)metadata.mipLevels;
+	resDesc.Dimension			= static_cast<D3D12_RESOURCE_DIMENSION>(metadata.dimension);
+	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;	// レイアウトは決定しない
+	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;		// 特にフラグなし
 
 	// バッファー作成
 	ID3D12Resource* texbuff = nullptr;
