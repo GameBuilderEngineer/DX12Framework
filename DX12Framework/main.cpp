@@ -799,7 +799,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
 	// 定数用ディスクリプタレンジ
-	D3D12_DESCRIPTOR_RANGE descTblRange[2] = {};	// テクスチャと定数の２つ
+	D3D12_DESCRIPTOR_RANGE descTblRange[3] = {};	// テクスチャと定数の２つ
 
 	// 定数一つ目（座標変換用）
 	descTblRange[0].NumDescriptors						= 1;	//	定数ひとつ
@@ -812,7 +812,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	descTblRange[1].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_CBV;	// 種別は定数
 	descTblRange[1].BaseShaderRegister					= 1;	// 1番スロットから
 	descTblRange[1].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	
+
+	// テクスチャ一つ目（↑のマテリアルとペア）
+	descTblRange[2].NumDescriptors						= 1;	//	テクスチャ1つ
+	descTblRange[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
+	descTblRange[2].BaseShaderRegister					= 0;	// 0番スロットから
+	descTblRange[2].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
 	D3D12_ROOT_PARAMETER rootparam[2] = {};
 	rootparam[0].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootparam[0].DescriptorTable.pDescriptorRanges		= &descTblRange[0];	// ディスクリプタレンジのアドレス
@@ -821,8 +827,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	rootparam[1].ParameterType							= D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootparam[1].DescriptorTable.pDescriptorRanges		= &descTblRange[1];	// ディスクリプタレンジのアドレス
-	rootparam[1].DescriptorTable.NumDescriptorRanges	= 1;	// ディスクリプタレンジ数
-	rootparam[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_ALL;	// ピクセルシェーダーから見える
+	rootparam[1].DescriptorTable.NumDescriptorRanges	= 2;	// ディスクリプタレンジ数
+	rootparam[1].ShaderVisibility						= D3D12_SHADER_VISIBILITY_PIXEL;	// ピクセルシェーダーから見える
 
 	rootSignatureDesc.pParameters = rootparam;	// ルートパラメータの先頭アドレス
 	rootSignatureDesc.NumParameters = 2;		// ルートパラメータ数
