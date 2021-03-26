@@ -217,7 +217,7 @@ ID3D12Resource* CreateWhiteTexture() {
 		nullptr,
 		data.data(),
 		4 * 4,
-		data.size()
+		(UINT)data.size()
 	);
 
 	return whiteBuff;
@@ -462,6 +462,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ウィンドウ表示
 	ShowWindow(hwnd, SW_SHOW);
 
+	auto whiteTex = CreateWhiteTexture();
+
 	// PMDヘッダ構造体
 	struct PMDHeader {
 		float version;			// 例：00 00 80 3F == 1.00
@@ -699,15 +701,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		matCBVDesc.BufferLocation += materialBuffSize;
 
 		// シェーダ―リソースビュー
-		if (textureResources[i] != nullptr)
+		if (textureResources[i] == nullptr)
 		{
-			srvDesc.Format = textureResources[i]->GetDesc().Format;
+			srvDesc.Format = whiteTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(
+				whiteTex,
+				&srvDesc,
+				matDescHeapH);
+			
 		}
-
-		_dev->CreateShaderResourceView(
-			textureResources[i],
-			&srvDesc,
-			matDescHeapH);
+		else {
+			srvDesc.Format = textureResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(
+				textureResources[i],
+				&srvDesc,
+				matDescHeapH);
+		}
 
 		matDescHeapH.ptr += incSize;
 	}
@@ -1083,6 +1092,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 
 	// 解放
+	safeRelease(whiteTex);
 	for (auto texResource : textureResources)
 	{
 		safeRelease(texResource);
