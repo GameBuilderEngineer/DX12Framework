@@ -8,7 +8,8 @@ SamplerState smp:register(s0);			// 0番スロットに設定されたサンプラ
 // 定数バッファ0
 cbuffer cbuff0 : register(b0) {
 	matrix world;		// ワールド変換行列
-	matrix viewproj;	// ビュープロジェクション行列
+	matrix view;		// ビュー行列
+	matrix proj;		// プロジェクション行列
 };
 // 定数バッファ1
 cbuffer Material : register(b1) {
@@ -22,7 +23,7 @@ float4 BasicPS(BasicType input) : SV_TARGET{
 	float brightness = dot(-light, input.normal);
 
 	// スフィアマップ用UV
-	float2 sphereMapUV = input.normal.xy;
+	float2 sphereMapUV = input.vnormal.xy;
 	sphereMapUV = (sphereMapUV + float2(1, -1)) * float2(0.5, -0.5);
 
 	return

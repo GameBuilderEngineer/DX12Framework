@@ -2,6 +2,8 @@
 //構造体
 struct BasicType {
 	float4 svpos:SV_POSITION;	// システム用頂点座標
-	float4 normal:NORMAL;		// 法線ベクトル
+	float4 pos:POSITION;		// 頂点座標
+	float4 normal:NORMAL0;		// 法線ベクトル
+	float4 vnormal:NORMAL1;		// ビュー変換後の法線ベクトル
 	float2 uv:TEXCOORD;			// UV値
 };
