@@ -76,7 +76,7 @@ std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, cons
 std::string GetExtension(const std::string& path)
 {
 	size_t idx = path.rfind('.');
-	return path.substr(++idx, path.length() - idx - 1);
+	return path.substr(idx+1, path.length() - idx - 1);
 }
 
 // テクスチャのパスをセパレータ文字で分離する
@@ -88,7 +88,7 @@ std::pair<string, string> SplitFileName(const std::string& path, const char spli
 	size_t idx = path.find(splitter);
 	pair<string, string> ret;
 	ret.first = path.substr(0, idx);
-	ret.second = path.substr(++idx, path.length() - idx - 1);
+	ret.second = path.substr(idx+1, path.length() - idx - 1);
 	return ret;
 }
 
