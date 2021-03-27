@@ -663,9 +663,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				}
 			}
 		}
+		else {
+			if (GetExtension(texFileName) == "sph")
+			{
+				sphFileName = texFileName;
+				texFileName = "";
+			}
+			else if (GetExtension(texFileName) == "spa")
+			{
+				texFileName = "";
+			}
 			else {
 
 			}
+		}
 		
 		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
 		// テクスチャの読み込み
