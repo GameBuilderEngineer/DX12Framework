@@ -635,8 +635,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 
 		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
-		auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, pmdMaterials[i].texFilePath);
-
+		string texFileName = pmdMaterials[i].texFilePath;
+		
+		if (std::count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
+			auto namepair = SplitFileName(texFileName);
+			if (GetExtension(namepair.first) == "sph" || GetExtension(namepair.first) == "spa")
+			{
+				texFileName = namepair.second;
+			}
+			else {
+				texFileName = namepair.first;
+			}
+		}
+		
+		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
+		auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, texFileName.c_str());
 		textureResources[i] = LoadTextureFromFile(texFilePath);
 	}
 
