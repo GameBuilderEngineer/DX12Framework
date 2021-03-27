@@ -76,9 +76,21 @@ std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, cons
 std::string GetExtension(const std::string& path)
 {
 	size_t idx = path.rfind('.');
-	return path.substr(idx++, path.length() - idx - 1);
+	return path.substr(++idx, path.length() - idx - 1);
 }
 
+// テクスチャのパスをセパレータ文字で分離する
+// @param path		対象のパス文字列
+// @param splitter	区切り文字
+// @return 分離前後の文字列ペア
+std::pair<string, string> SplitFileName(const std::string& path, const char splitter = '*')
+{
+	size_t idx = path.find(splitter);
+	pair<string, string> ret;
+	ret.first = path.substr(0, idx);
+	ret.second = path.substr(++idx, path.length() - idx - 1);
+	return ret;
+}
 
 // std::string（マルチバイト文字列）からstd::wstring（ワイド文字列）を得る
 // @param str マルチバイト文字列
