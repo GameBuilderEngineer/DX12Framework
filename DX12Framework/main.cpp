@@ -1142,13 +1142,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	MSG msg				= {};
 	unsigned int frame	= 0;
 	float angle			= 0.0f;
+	float delta			= 0.005f;
+	float sumDelta		= 0.0f;
 	while (true)
 	{
 		worldMat			= XMMatrixRotationY(angle);
+		viewMat				= XMMatrixLookAtLH(
+			XMLoadFloat3(&eye),
+			XMLoadFloat3(&target),
+			XMLoadFloat3(&up)
+		);;
 		mapMatrix->world	= worldMat;
 		mapMatrix->view		= viewMat;
 		mapMatrix->proj		= projMat;
-		angle += 0.005f;
+		angle		+= delta*10.0f;
+		sumDelta	+= delta;
+		eye.x		+= delta*20.0f;
+		target.x	+= delta*20.0f;
+		if (fabsf(sumDelta) >= 1.0f)
+		{
+			delta *= -1.0f;
+		}
 
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
