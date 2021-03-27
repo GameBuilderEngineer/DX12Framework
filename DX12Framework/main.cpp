@@ -70,6 +70,16 @@ std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, cons
 	return folderPath + texPath;
 }
 
+// ファイル名から拡張子を取得する
+// @param path	対象のパス文字列
+// @return		拡張子
+std::string GetExtension(const std::string& path)
+{
+	size_t idx = path.rfind('.');
+	return path.substr(idx++, path.length() - idx - 1);
+}
+
+
 // std::string（マルチバイト文字列）からstd::wstring（ワイド文字列）を得る
 // @param str マルチバイト文字列
 // @return 変換されたワイド文字列
