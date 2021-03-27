@@ -669,6 +669,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// リソース
 	vector<ID3D12Resource*> textureResources(materialNum);
 	vector<ID3D12Resource*> sphResources(materialNum);
+	vector<ID3D12Resource*> spaResources(materialNum);
 
 	// PMDマテリアル情報の読み込み
 	std::vector<PMDMaterial> pmdMaterials(materialNum);
@@ -692,6 +693,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
 		string texFileName = pmdMaterials[i].texFilePath;
 		string sphFileName = "";
+		string spaFileName = "";
 		
 		if (std::count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
 			auto namepair = SplitFileName(texFileName);
@@ -702,6 +704,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			else if (GetExtension(namepair.first) == "spa")
 			{
+				spaFileName = namepair.first;
 				texFileName = namepair.second;
 			}
 			else
@@ -713,7 +716,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				}
 				else if (GetExtension(namepair.second) == "spa")
 				{
-
+					spaFileName = namepair.second;
 				}
 			}
 		}
@@ -725,10 +728,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			else if (GetExtension(texFileName) == "spa")
 			{
+				spaFileName = texFileName;
 				texFileName = "";
-			}
-			else {
-
 			}
 		}
 		
@@ -738,10 +739,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, texFileName.c_str());
 			textureResources[i] = LoadTextureFromFile(texFilePath);
 		}
-		// スフィアマップの読み込み
+		// 乗算スフィアマップの読み込み
 		if (sphFileName != "") {
 			auto sphFilePath = GetTexturePathFromModelAndTexPath(strModelPath, sphFileName.c_str());
 			sphResources[i] = LoadTextureFromFile(sphFilePath);
+		}
+		// 加算スフィアマップの読み込み
+		if (spaFileName != "") {
+			auto spaFilePath = GetTexturePathFromModelAndTexPath(strModelPath, spaFileName.c_str());
+			spaResources[i] = LoadTextureFromFile(spaFilePath);
 		}
 	}
 
@@ -801,7 +807,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
 	matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	matDescHeapDesc.NodeMask = 0;
-	matDescHeapDesc.NumDescriptors = materialNum * 3;	// マテリアル数x3を指定
+	matDescHeapDesc.NumDescriptors = materialNum * 4;	// マテリアル数x4(定数,テクスチャ3つ)を指定
 	matDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	result = _dev->CreateDescriptorHeap(&matDescHeapDesc, IID_PPV_ARGS(&materialDescHeap));
 
@@ -852,6 +858,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		}
 		matDescHeapH.ptr += incSize;
 
+		// 加算スフィアマップ用ビューの作成
+		if (spaResources[i] == nullptr) {
+			srvDesc.Format = blackTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(blackTex, &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = spaResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(spaResources[i], &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.ptr += incSize;
 	}
 
 	// シェーダ―
@@ -1007,7 +1023,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	descTblRange[1].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// テクスチャ一つ目（↑のマテリアルとペア）
-	descTblRange[2].NumDescriptors						= 2;	//	テクスチャ2つ(基本とsph)
+	descTblRange[2].NumDescriptors						= 3;	//	テクスチャ3つ(基本とsphとspa)
 	descTblRange[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
 	descTblRange[2].BaseShaderRegister					= 0;	// 0番スロットから
 	descTblRange[2].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -1185,7 +1201,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();	// ヒープ先頭
 		unsigned int idxOffset = 0;
 
-		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 3;
+		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 4;
 		for (auto& m : materials) {
 			_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
 			_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
@@ -1227,6 +1243,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// 解放
 	safeRelease(blackTex);
 	safeRelease(whiteTex);
+	for (auto spa : spaResources)
+	{
+		safeRelease(spa);
+	}
 	for (auto sph : sphResources)
 	{
 		safeRelease(sph);
