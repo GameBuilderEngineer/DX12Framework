@@ -1082,8 +1082,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	//シェーダ側に渡すための基本的な行列データ
 	struct MatrixData {
-		XMMATRIX world;
-		XMMATRIX viewproj;
+		XMMATRIX world;	// ワールド行列
+		XMMATRIX view;	// ビュー行列
+		XMMATRIX proj;	// プロジェクション行列
 	};
 
 	// 定数バッファ作成
@@ -1119,7 +1120,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	result = constBuff->Map(0, nullptr, (void**)&mapMatrix);	//マップ
 	//行列の内容をコピー
 	mapMatrix->world = worldMat;
-	mapMatrix->viewproj = viewMat * projMat;
+	mapMatrix->view = viewMat;
+	mapMatrix->proj = projMat;
 
 	ID3D12DescriptorHeap* basicDescHeap		= nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
@@ -1144,7 +1146,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	{
 		worldMat			= XMMatrixRotationY(angle);
 		mapMatrix->world	= worldMat;
-		mapMatrix->viewproj = viewMat * projMat;
+		mapMatrix->view		= viewMat;
+		mapMatrix->proj		= projMat;
 		angle += 0.005f;
 
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
