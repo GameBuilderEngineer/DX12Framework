@@ -26,10 +26,14 @@ float4 BasicPS(BasicType input) : SV_TARGET{
 	float2 sphereMapUV = input.vnormal.xy;
 	sphereMapUV = (sphereMapUV + float2(1, -1)) * float2(0.5, -0.5);
 
-	return
-		float4(brightness, brightness, brightness, 1)	// 輝度
-		* diffuse										// ディフューズ色
-		* tex.Sample(smp, input.uv)						// テクスチャカラー
-		* sph.Sample(smp, sphereMapUV)					// スフィアマップ(乗算)
-		+ spa.Sample(smp, sphereMapUV);					// スフィアマップ(乗算)
+	float4 texColor = tex.Sample(smp, input.uv);
+
+	return max(
+		float4(brightness, brightness, brightness, 1)		// 輝度
+		* diffuse											// ディフューズ色
+		* texColor											// テクスチャカラー
+		* sph.Sample(smp, sphereMapUV)						// スフィアマップ(乗算)
+		+ saturate(spa.Sample(smp, sphereMapUV))*texColor	// スフィアマップ(加算)
+		, float4(texColor*ambient, 1)						// アンビエント
+		);
 }

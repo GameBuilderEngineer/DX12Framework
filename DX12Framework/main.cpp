@@ -1089,8 +1089,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// 定数バッファ作成
 	XMMATRIX worldMat = XMMatrixIdentity();
-	XMFLOAT3 eye(0, 10, -15);
-	XMFLOAT3 target(0, 10, 0);
+	XMFLOAT3 eye(0, 15, -10);
+	XMFLOAT3 target(0, 15, 0);
 	XMFLOAT3 up(0, 1, 0);
 	auto viewMat = XMMatrixLookAtLH(
 		XMLoadFloat3(&eye),
