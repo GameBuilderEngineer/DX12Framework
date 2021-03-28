@@ -551,10 +551,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//string strModelPath = "Model/hibiki/hibiki.pmd";
 	//string strModelPath = "Model/satori/satori.pmd";
 	//string strModelPath = "Model/reimu/reimu.pmd";
-	string strModelPath = "Model/巡音ルカ.pmd";
+	//string strModelPath = "Model/巡音ルカ.pmd";
 	//string strModelPath = "Model/初音ミク.pmd";
 	//string strModelPath = "Model/初音ミクVer2.pmd";
-	//string strModelPath = "Model/初音ミクmetal.pmd";
+	string strModelPath = "Model/初音ミクmetal.pmd";
 	//string strModelPath = "Model/咲音メイコ.pmd";
 	//string strModelPath = "Model/ダミーボーン.pmd";//NG
 	//string strModelPath = "Model/鏡音リン.pmd";
@@ -1081,10 +1081,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	scissorrect.bottom	= scissorrect.top + window_height;	// 切り抜き下座標
 
 	//シェーダ側に渡すための基本的な行列データ
-	struct MatrixData {
+	struct SceneData {
 		XMMATRIX world;	// ワールド行列
 		XMMATRIX view;	// ビュー行列
 		XMMATRIX proj;	// プロジェクション行列
+		XMFLOAT3 eye;	// 視点座標
 	};
 
 	// 定数バッファ作成
@@ -1116,12 +1117,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		IID_PPV_ARGS(&constBuff)
 	);
 
-	MatrixData* mapMatrix = {};	// マップ先を示すポインタ
+	SceneData* mapMatrix = {};	// マップ先を示すポインタ
 	result = constBuff->Map(0, nullptr, (void**)&mapMatrix);	//マップ
 	//行列の内容をコピー
 	mapMatrix->world = worldMat;
 	mapMatrix->view = viewMat;
 	mapMatrix->proj = projMat;
+	mapMatrix->eye = eye;
 
 	ID3D12DescriptorHeap* basicDescHeap		= nullptr;
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
@@ -1155,6 +1157,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		mapMatrix->world	= worldMat;
 		mapMatrix->view		= viewMat;
 		mapMatrix->proj		= projMat;
+		mapMatrix->eye		= eye;
+
 		angle		+= delta*10.0f;
 		sumDelta	+= delta;
 		eye.x		+= delta*20.0f;

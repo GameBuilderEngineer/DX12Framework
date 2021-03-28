@@ -6,4 +6,5 @@ struct BasicType {
 	float4 normal:NORMAL0;		// 法線ベクトル
 	float4 vnormal:NORMAL1;		// ビュー変換後の法線ベクトル
 	float2 uv:TEXCOORD;			// UV値
+	float3 ray:VECTOR;			// 視線ベクトル
 };

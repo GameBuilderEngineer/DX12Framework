@@ -7,6 +7,7 @@ cbuffer cbuff0 : register(b0) {
 	matrix world;	// ワールド変換行列
 	matrix view;	// ビュー行列
 	matrix proj;	// プロジェクション行列
+	float3 eye;		// 視線ベクトル
 };
 
 //頂点シェーダー
@@ -25,5 +26,7 @@ BasicType BasicVS(
 	output.normal	= mul(world, normal);// 法線にもワールド変換を行う
 	output.vnormal	= mul(world, output.normal);
 	output.uv		= uv;
+	output.ray		= normalize(pos.xyz - mul(view,eye));
+
 	return output;
 }
