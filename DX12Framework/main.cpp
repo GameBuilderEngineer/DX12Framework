@@ -122,17 +122,129 @@ std::wstring GetWideStringFromString(const std::string& str)
 	return wstr;
 }
 
+// 白テクスチャの作成
+ID3D12Resource* CreateWhiteTexture() {
+
+	D3D12_HEAP_PROPERTIES texHeapProp = {};
+	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;
+	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	// texHeapProp.CreationNodeMask = 0;
+	texHeapProp.VisibleNodeMask = 0;
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	resDesc.Width = 4;	// 幅
+	resDesc.Height = 4;	// 高さ
+	resDesc.DepthOrArraySize = 1;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.SampleDesc.Quality = 0;
+	resDesc.MipLevels = 1;
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	ID3D12Resource* whiteBuff = nullptr;
+
+	auto result = _dev->CreateCommittedResource(
+		&texHeapProp,
+		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
+		&resDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&whiteBuff)
+	);
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	std::vector<unsigned char> data(4 * 4 * 4);
+	std::fill(data.begin(), data.end(), 0xff);	// 全部255で埋める
+
+	// データ転送
+	result = whiteBuff->WriteToSubresource(
+		0,
+		nullptr,
+		data.data(),
+		4 * 4,
+		(UINT)data.size()
+	);
+
+	return whiteBuff;
+}
+
+// 黒テクスチャの作成
+ID3D12Resource* CreateBlackTexture() {
+
+	D3D12_HEAP_PROPERTIES texHeapProp = {};
+	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;
+	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	// texHeapProp.CreationNodeMask = 0;
+	texHeapProp.VisibleNodeMask = 0;
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	resDesc.Width = 4;	// 幅
+	resDesc.Height = 4;	// 高さ
+	resDesc.DepthOrArraySize = 1;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.SampleDesc.Quality = 0;
+	resDesc.MipLevels = 1;
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	resDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	ID3D12Resource* blackBuff = nullptr;
+
+	auto result = _dev->CreateCommittedResource(
+		&texHeapProp,
+		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
+		&resDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&blackBuff)
+	);
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	std::vector<unsigned char> data(4 * 4 * 4);
+	std::fill(data.begin(), data.end(), 0x00);	// 全部0で埋める
+
+	// データ転送
+	result = blackBuff->WriteToSubresource(
+		0,
+		nullptr,
+		data.data(),
+		4 * 4,
+		(UINT)data.size()
+	);
+
+	return blackBuff;
+}
+
+using LoadLambda_t = function<HRESULT(const wstring& path, TexMetadata*, ScratchImage&)>;
+map < string, LoadLambda_t> loadLambdaTable;
+
 // テクスチャの読み込み
 ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
 	// WICテクスチャのロード
 	TexMetadata metadata = {};
 	ScratchImage scratchImg = {};
 
-	auto result = LoadFromWICFile(
-		GetWideStringFromString(texPath).c_str(),
-		WIC_FLAGS_NONE,
-		&metadata,
-		scratchImg);
+	// テクスチャのファイルパス
+	auto wtexpath = GetWideStringFromString(texPath);
+
+	// 拡張子を取得
+	auto ext = GetExtension(texPath);
+
+	auto result = loadLambdaTable[ext](wtexpath, &metadata, scratchImg);
+
 	if (FAILED(result))
 	{
 		return nullptr;
@@ -190,112 +302,6 @@ ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
 	}
 
 	return texbuff;
-}
-
-// 白テクスチャの作成
-ID3D12Resource* CreateWhiteTexture() {
-
-	D3D12_HEAP_PROPERTIES texHeapProp = {};
-	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;
-	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
-	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-	// texHeapProp.CreationNodeMask = 0;
-	texHeapProp.VisibleNodeMask = 0;
-
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	resDesc.Width				= 4;	// 幅
-	resDesc.Height				= 4;	// 高さ
-	resDesc.DepthOrArraySize	= 1;
-	resDesc.SampleDesc.Count	= 1;
-	resDesc.SampleDesc.Quality	= 0;
-	resDesc.MipLevels			= 1;
-	resDesc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;
-
-	ID3D12Resource* whiteBuff = nullptr;
-
-	auto result = _dev->CreateCommittedResource(
-		&texHeapProp,
-		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
-		&resDesc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		nullptr,
-		IID_PPV_ARGS(&whiteBuff)
-	);
-
-	if (FAILED(result))
-	{
-		return nullptr;
-	}
-
-	std::vector<unsigned char> data(4 * 4 * 4);
-	std::fill(data.begin(), data.end(), 0xff);	// 全部255で埋める
-
-	// データ転送
-	result = whiteBuff->WriteToSubresource(
-		0,
-		nullptr,
-		data.data(),
-		4 * 4,
-		(UINT)data.size()
-	);
-
-	return whiteBuff;
-}
-
-// 黒テクスチャの作成
-ID3D12Resource* CreateBlackTexture() {
-
-	D3D12_HEAP_PROPERTIES texHeapProp = {};
-	texHeapProp.Type = D3D12_HEAP_TYPE_CUSTOM;
-	texHeapProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
-	texHeapProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-	// texHeapProp.CreationNodeMask = 0;
-	texHeapProp.VisibleNodeMask = 0;
-
-	D3D12_RESOURCE_DESC resDesc = {};
-	resDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	resDesc.Width				= 4;	// 幅
-	resDesc.Height				= 4;	// 高さ
-	resDesc.DepthOrArraySize	= 1;
-	resDesc.SampleDesc.Count	= 1;
-	resDesc.SampleDesc.Quality	= 0;
-	resDesc.MipLevels			= 1;
-	resDesc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;
-
-	ID3D12Resource* blackBuff = nullptr;
-
-	auto result = _dev->CreateCommittedResource(
-		&texHeapProp,
-		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
-		&resDesc,
-		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-		nullptr,
-		IID_PPV_ARGS(&blackBuff)
-	);
-
-	if (FAILED(result))
-	{
-		return nullptr;
-	}
-
-	std::vector<unsigned char> data(4 * 4 * 4);
-	std::fill(data.begin(), data.end(), 0x00);	// 全部0で埋める
-
-	// データ転送
-	result = blackBuff->WriteToSubresource(
-		0,
-		nullptr,
-		data.data(),
-		4 * 4,
-		(UINT)data.size()
-	);
-
-	return blackBuff;
 }
 
 void EnableDebugLayer() {
@@ -478,6 +484,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		_dev->CreateRenderTargetView(_backBuffers[i], &rtvDesc, rtvH);
 		rtvH.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
+
+	loadLambdaTable["sph"]
+		= loadLambdaTable["spa"]
+		= loadLambdaTable["bmp"]
+		= loadLambdaTable["png"]
+		= loadLambdaTable["jpg"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, meta, img);
+	};
+	
+	loadLambdaTable["tga"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromTGAFile(path.c_str(), meta, img);
+	};
+
+	loadLambdaTable["dds"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromDDSFile(path.c_str(),DDS_FLAGS_NONE, meta, img);
+	};
+	
 
 	// 深度バッファ作成
 	// 深度バッファの仕様
