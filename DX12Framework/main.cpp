@@ -231,8 +231,19 @@ ID3D12Resource* CreateBlackTexture() {
 using LoadLambda_t = function<HRESULT(const wstring& path, TexMetadata*, ScratchImage&)>;
 map < string, LoadLambda_t> loadLambdaTable;
 
+// ファイル名パスとリソースのマップテーブル
+map<string, ID3D12Resource*> _resourceTable;
+
 // テクスチャの読み込み
 ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
+	auto it = _resourceTable.find(texPath);
+	if (it != _resourceTable.end())
+	{
+		// テーブル内にあったらロードするのではなくマップ内の
+		// リソースを返す
+		return _resourceTable[texPath];
+	}
+	
 	// WICテクスチャのロード
 	TexMetadata metadata = {};
 	ScratchImage scratchImg = {};
@@ -301,6 +312,8 @@ ID3D12Resource* LoadTextureFromFile(std::string& texPath) {
 		return nullptr;
 	}
 
+	_resourceTable[texPath] = texbuff;
+	
 	return texbuff;
 }
 
