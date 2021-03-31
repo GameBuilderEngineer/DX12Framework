@@ -581,9 +581,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//string strModelPath = "Model/satori/satori.pmd";
 	//string strModelPath = "Model/reimu/reimu.pmd";
 	//string strModelPath = "Model/巡音ルカ.pmd";
-	//string strModelPath = "Model/初音ミク.pmd";
+	string strModelPath = "Model/初音ミク.pmd";
 	//string strModelPath = "Model/初音ミクVer2.pmd";
-	string strModelPath = "Model/初音ミクmetal.pmd";
+	//string strModelPath = "Model/初音ミクmetal.pmd";
 	//string strModelPath = "Model/咲音メイコ.pmd";
 	//string strModelPath = "Model/ダミーボーン.pmd";//NG
 	//string strModelPath = "Model/鏡音リン.pmd";
@@ -1119,8 +1119,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// 定数バッファ作成
 	XMMATRIX worldMat = XMMatrixIdentity();
-	XMFLOAT3 eye(0, 15, -10);
-	XMFLOAT3 target(0, 15, 0);
+	XMFLOAT3 eye(0, 17, -5);
+	XMFLOAT3 target(0, 17, 0);
 	XMFLOAT3 up(0, 1, 0);
 	auto viewMat = XMMatrixLookAtLH(
 		XMLoadFloat3(&eye),
@@ -1188,14 +1188,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		mapMatrix->proj		= projMat;
 		mapMatrix->eye		= eye;
 
-		angle		+= delta*10.0f;
-		sumDelta	+= delta;
-		eye.x		+= delta*20.0f;
-		target.x	+= delta*20.0f;
-		if (fabsf(sumDelta) >= 1.0f)
-		{
-			delta *= -1.0f;
-		}
+		//angle		+= delta*10.0f;
+		//sumDelta	+= delta;
+		//eye.x		+= delta*20.0f;
+		//target.x	+= delta*20.0f;
+		//if (fabsf(sumDelta) >= 1.0f)
+		//{
+		//	delta *= -1.0f;
+		//}
 
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
