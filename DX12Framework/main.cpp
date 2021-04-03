@@ -25,6 +25,14 @@
 using namespace DirectX;
 using namespace std;
 
+template <class T>
+void safeRelease(T* p)
+{
+	if (p != nullptr)
+		p->Release();
+	p = nullptr;
+}
+
 ///@brief コンソール画面にフォーマット付き文字列を表示
 ///@param format フォーマット
 ///@param 可変長引数
@@ -382,6 +390,178 @@ void EnableDebugLayer() {
 	debugLayer->Release();
 }
 
+// スワップチェイン生成関数
+HRESULT CreateSwapChain(const HWND& hwnd, IDXGIFactory4*& dxgiFactory) {
+
+	// スワップチェインの作成
+	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
+	swapchainDesc.Width					= window_width;
+	swapchainDesc.Height				= window_height;
+	swapchainDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapchainDesc.Stereo				= false;
+	swapchainDesc.SampleDesc.Count		= 1;
+	swapchainDesc.SampleDesc.Quality	= 0;
+	swapchainDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapchainDesc.BufferCount			= 2;
+	swapchainDesc.Scaling				= DXGI_SCALING_STRETCH;
+	swapchainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	swapchainDesc.AlphaMode				= DXGI_ALPHA_MODE_UNSPECIFIED;
+	swapchainDesc.Flags					= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	
+	return _dxgiFactory->CreateSwapChainForHwnd(_cmdQueue,
+		hwnd,
+		&swapchainDesc,
+		nullptr,
+		nullptr,
+		(IDXGISwapChain1**)&_swapchain);
+}
+
+
+void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass) {
+	HINSTANCE hInst = GetModuleHandle(nullptr);
+
+	//ウィンドウクラス生成＆登録
+	windowClass.cbSize = sizeof(WNDCLASSEX);
+	windowClass.lpfnWndProc = (WNDPROC)WindowProcedure;	// コールバック関数の指定
+	windowClass.lpszClassName = _T("DirectXTex");			// アプリケーションクラス名
+	windowClass.hInstance = GetModuleHandle(0);			// ハンドルの取得
+	RegisterClassEx(&windowClass);						// アプリケーションクラス
+
+	RECT wrc = { 0,0,window_width, window_height };		// ウィンドウサイズを決める
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);	// ウィンドウのサイズを関数を使って補正する
+	// ウィンドウオブジェクトの生成
+	hwnd = CreateWindow(
+		windowClass.lpszClassName,	// クラス名指定
+		_T("DX12テスト 3D座標"),	// タイトルバーの文字
+		WS_OVERLAPPEDWINDOW,		// タイトルバーと境界線
+		CW_USEDEFAULT,				// 表示X座標はOS
+		CW_USEDEFAULT,				// 表示Y座標はOS
+		wrc.right - wrc.left,		// ウィンドウ幅
+		wrc.bottom - wrc.top,		// ウィンドウ高
+		nullptr,					// 親ウィンドウハンドル
+		nullptr,					// メニューハンドル
+		windowClass.hInstance,		// 呼び出しアプリケーションハンドル
+		nullptr);					// 追加パラメータ
+}
+
+HRESULT InitializeDXGIDevice() {
+	UINT flagsDXGI = 0;
+	flagsDXGI |= DXGI_CREATE_FACTORY_DEBUG;
+	auto result = CreateDXGIFactory2(flagsDXGI, IID_PPV_ARGS(&_dxgiFactory));
+
+	// DirectX12初期化
+	// フィーチャレベル列挙
+	D3D_FEATURE_LEVEL levels[] = {
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+	};
+
+	if (FAILED(result)) {
+		return result;
+	}
+
+	std::vector<IDXGIAdapter*> adapters;
+	IDXGIAdapter* tmpAdapter = nullptr;
+	for (int i = 0; _dxgiFactory->EnumAdapters(i, &tmpAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
+		adapters.push_back(tmpAdapter);
+	}
+
+	for (auto adpt : adapters) {
+		DXGI_ADAPTER_DESC adesc = {};
+		adpt->GetDesc(&adesc);
+		std::wstring strDesc = adesc.Description;
+		if (strDesc.find(L"NVIDIA") != std::string::npos) {
+			tmpAdapter = adpt;
+			break;
+		}
+	}
+
+	result = S_FALSE;
+
+	//Direct3Dデバイスの初期化
+	D3D_FEATURE_LEVEL featureLevel;
+	for (auto l : levels) {
+		if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(&_dev)) == S_OK) {
+			featureLevel = l;
+			result = S_OK;
+			break;
+		}
+	}
+
+	for (auto adpt : adapters) {
+		safeRelease(adpt);
+	}
+
+	return result;
+}
+
+HRESULT InitializeCommand() {
+	// コマンドアロケータの作成
+	auto result = _dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_cmdAllocator));
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	// コマンドリストの作成
+	result = _dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _cmdAllocator, nullptr, IID_PPV_ARGS(&_cmdList));
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	// コマンドキューの作成
+	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
+	cmdQueueDesc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;			// タイムアウトなし
+	cmdQueueDesc.NodeMask	= 0;
+	cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;		// プライオリティ特に指定なし
+	cmdQueueDesc.Type		= D3D12_COMMAND_LIST_TYPE_DIRECT;			// ここはコマンドリストと合わせる
+	result = _dev->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&_cmdQueue));	// コマンドキュー
+
+	if (FAILED(result)) {
+		assert(0);
+	}
+}
+
+HRESULT CreateFinalRenderTarget(ID3D12DescriptorHeap*& rtvHeaps, vector<ID3D12Resource*>& backBuffers) {
+
+	// デスクリプタヒープの作成
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// レンダーターゲットビューなので当然RTV
+	heapDesc.NodeMask		= 0;
+	heapDesc.NumDescriptors = 2;								// 表裏の２つ
+	heapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// 特に指定なし
+
+	auto result = _dev->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	DXGI_SWAP_CHAIN_DESC swcDesc = {};
+	result = _swapchain->GetDesc(&swcDesc);
+	backBuffers.resize(swcDesc.BufferCount);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+
+	// SRGBレンダーターゲットビュー設定
+	// これやると色味がよくなるが、バックバッファとの
+	// フォーマットの食い違いによりDebugLayerにエラーが出力される
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format			= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	rtvDesc.ViewDimension	= D3D12_RTV_DIMENSION_TEXTURE2D;
+
+	for (int i = 0; i < (int)swcDesc.BufferCount; ++i)
+	{
+		result = _swapchain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
+		rtvDesc.Format = backBuffers[i]->GetDesc().Format;
+		_dev->CreateRenderTargetView(backBuffers[i], &rtvDesc, handle);
+		handle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	}
+}
+
 // D3Dデバイスが保持しているオブジェクト情報を出力
 void ReportD3DObject()
 {
@@ -394,14 +574,6 @@ void ReportD3DObject()
 		debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
 		debugDevice->Release();
 	}
-}
-
-template <class T>
-void safeRelease(T* p)
-{
-	if(p != nullptr)
-		p->Release();
-	p = nullptr;
 }
 
 void releaseResource()
@@ -430,131 +602,27 @@ int main() {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 	DebugOutputFormatString("Show window test.");
-	HINSTANCE hInst = GetModuleHandle(nullptr);
-	//ウィンドウクラス生成＆登録
-	WNDCLASSEX w = {};
-	w.cbSize = sizeof(WNDCLASSEX);
-	w.lpfnWndProc = (WNDPROC)WindowProcedure;	// コールバック関数の指定
-	w.lpszClassName = _T("DirectXTex");			// アプリケーションクラス名
-	w.hInstance = GetModuleHandle(0);			// ハンドルの取得
-	RegisterClassEx(&w);						// アプリケーションクラス
 
-	RECT wrc = { 0,0,window_width, window_height };		// ウィンドウサイズを決める
-	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);	// ウィンドウのサイズを関数を使って補正する
-	// ウィンドウオブジェクトの生成
-	HWND hwnd = CreateWindow(
-		w.lpszClassName,			// クラス名指定
-		_T("DX12テスト 3D座標"),	// タイトルバーの文字
-		WS_OVERLAPPEDWINDOW,		// タイトルバーと境界線
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		wrc.right - wrc.left,
-		wrc.bottom - wrc.top,
-		nullptr,
-		nullptr,
-		w.hInstance,
-		nullptr);
+	HWND hwnd;
+	WNDCLASSEX windowClass = {};
+	CreateGameWindow(hwnd, windowClass);
 
 #ifdef _DEBUG
 	// デバッグレイヤーをオンに
 	EnableDebugLayer();
 #endif
 
-	//DirectX12初期化
-	//フィーチャレベル列挙
-	D3D_FEATURE_LEVEL levels[] = {
-		D3D_FEATURE_LEVEL_12_1,
-		D3D_FEATURE_LEVEL_12_0,
-		D3D_FEATURE_LEVEL_11_1,
-		D3D_FEATURE_LEVEL_11_0,
-	};
-	auto result = CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&_dxgiFactory));
+	HRESULT result = InitializeDXGIDevice();
 
-	std::vector<IDXGIAdapter*> adapters;
-	IDXGIAdapter* tmpAdapter = nullptr;
-	for (int i = 0; _dxgiFactory->EnumAdapters(i, &tmpAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
-		adapters.push_back(tmpAdapter);
-	}
-	for (auto adpt : adapters) {
-		DXGI_ADAPTER_DESC adesc = {};
-		adpt->GetDesc(&adesc);
-		std::wstring strDesc = adesc.Description;
-		if (strDesc.find(L"NVIDIA") != std::string::npos) {
-			tmpAdapter = adpt;
-			break;
-		}
-	}
+	result = InitializeCommand();
 
-	//Direct3Dデバイスの初期化
-	D3D_FEATURE_LEVEL featureLevel;
-	for (auto l : levels) {
-		if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(&_dev)) == S_OK) {
-			featureLevel = l;
-			break;
-		}
-	}
+	result = CreateSwapChain(hwnd, _dxgiFactory);
 
-	// コマンドアロケータの作成
-	result = _dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_cmdAllocator));
-	// コマンドリストの作成
-	result = _dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _cmdAllocator, nullptr, IID_PPV_ARGS(&_cmdList));
-
-	// コマンドキューの作成
-	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc = {};
-	cmdQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;				// タイムアウトなし
-	cmdQueueDesc.NodeMask = 0;
-	cmdQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;	// プライオリティ特に指定なし
-	cmdQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;				// ここはコマンドリストと合わせる
-	result = _dev->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&_cmdQueue));	// コマンドキュー
-
-	// スワップチェインの作成
-	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
-	swapchainDesc.Width					= window_width;
-	swapchainDesc.Height				= window_height;
-	swapchainDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapchainDesc.Stereo				= false;
-	swapchainDesc.SampleDesc.Count		= 1;
-	swapchainDesc.SampleDesc.Quality	= 0;
-	swapchainDesc.BufferUsage			= DXGI_USAGE_BACK_BUFFER;
-	swapchainDesc.BufferCount			= 2;
-	swapchainDesc.Scaling				= DXGI_SCALING_STRETCH;
-	swapchainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapchainDesc.AlphaMode				= DXGI_ALPHA_MODE_UNSPECIFIED;
-	swapchainDesc.Flags					= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	result = _dxgiFactory->CreateSwapChainForHwnd(_cmdQueue,
-		hwnd,
-		&swapchainDesc,
-		nullptr,
-		nullptr,
-		(IDXGISwapChain1**)&_swapchain);
-
-	// デスクリプタヒープの作成
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// レンダーターゲットビューなので当然RTV
-	heapDesc.NodeMask		= 0;
-	heapDesc.NumDescriptors = 2;								// 表裏の２つ
-	heapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// 特に指定なし
+	std::vector<ID3D12Resource*> _backBuffers;
 	ID3D12DescriptorHeap* rtvHeaps = nullptr;
-	result = _dev->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&rtvHeaps));
-	DXGI_SWAP_CHAIN_DESC swcDesc = {};
-	result = _swapchain->GetDesc(&swcDesc);
-	std::vector<ID3D12Resource*> _backBuffers(swcDesc.BufferCount);
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
 
-	// SRGBレンダーターゲットビュー設定
-	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	// これやると色味がよくなるが、バックバッファとの
-	// フォーマットの食い違いによりDebugLayerにエラーが出力される
-	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	result = CreateFinalRenderTarget(rtvHeaps, _backBuffers);
 
-	for (int i = 0; i < (int)swcDesc.BufferCount; ++i)
-	{
-		result = _swapchain->GetBuffer(i, IID_PPV_ARGS(&_backBuffers[i]));
-		rtvDesc.Format = _backBuffers[i]->GetDesc().Format;
-		_dev->CreateRenderTargetView(_backBuffers[i], &rtvDesc, rtvH);
-		rtvH.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	}
 
 	loadLambdaTable["sph"]
 		= loadLambdaTable["spa"]
@@ -1387,7 +1455,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		_cmdList->Reset(_cmdAllocator, nullptr);	//再びコマンドリストをためる準備
 
 	}
-	UnregisterClass(w.lpszClassName, w.hInstance);
+	UnregisterClass(windowClass.lpszClassName, windowClass.hInstance);
 
 #ifdef _DEBUG
 	ReportD3DObject();
@@ -1429,9 +1497,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		safeRelease(buf);
 	}
 	safeRelease(rtvHeaps);
-	for (auto adpt : adapters) {
-		safeRelease(adpt);
-	}
 	releaseResource();
 
 #ifdef _DEBUG
