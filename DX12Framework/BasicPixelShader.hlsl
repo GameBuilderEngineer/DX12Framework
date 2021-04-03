@@ -1,7 +1,8 @@
 #include "BasicType.hlsli"
 Texture2D<float4> tex:register(t0);		// 0番スロットに設定されたテクスチャ(ベース)
 Texture2D<float4> sph:register(t1);		// 1番スロットに設定されたテクスチャ(乗算)
-Texture2D<float4> spa:register(t2);		// 1番スロットに設定されたテクスチャ(加算)
+Texture2D<float4> spa:register(t2);		// 2番スロットに設定されたテクスチャ(加算)
+Texture2D<float4> toon:register(t3);	// 3番スロットに設定されたテクスチャ(トゥーン)
 
 SamplerState smp:register(s0);			// 0番スロットに設定されたサンプラ
 
@@ -25,6 +26,7 @@ float4 BasicPS(BasicType input) : SV_TARGET{
 
 	// ディフューズ計算
 	float diffuseB = saturate(dot(-light, input.normal));
+	float4 toonDif = toon.Sample(smp, float2(0, 1.0 - diffuseB));
 
 	// 光の反射ベクトル
 	float3 refLight = normalize(reflect(light, input.normal.xyz));
@@ -36,13 +38,13 @@ float4 BasicPS(BasicType input) : SV_TARGET{
 
 	float4 texColor = tex.Sample(smp, input.uv);
 
-	return max(
-		diffuseB 											// 輝度
+	return max(saturate(
+		toonDif 											// 輝度(トゥーン)
 		* diffuse											// ディフューズ色
 		* texColor											// テクスチャカラー
 		* sph.Sample(smp, sphereMapUV)						// スフィアマップ(乗算)
 		+ saturate(spa.Sample(smp, sphereMapUV)) * texColor	// スフィアマップ(加算)
-		+ float4(specularB * specular.rgb, 1)				// スペキュラ
+		+ float4(specularB * specular.rgb, 1))				// スペキュラ
 		, float4(texColor * ambient, 1)						// アンビエント
 	);
 }
