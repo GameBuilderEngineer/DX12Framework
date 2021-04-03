@@ -122,6 +122,64 @@ std::wstring GetWideStringFromString(const std::string& str)
 	return wstr;
 }
 
+// デフォルトグラデーションテクスチャ
+ID3D12Resource* CreateGrayGradationTexture() {
+
+	D3D12_RESOURCE_DESC resDesc = {};
+	resDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	resDesc.Width				= 4;									// 幅
+	resDesc.Height				= 256;									// 高さ
+	resDesc.DepthOrArraySize	= 1;
+	resDesc.SampleDesc.Count	= 1;
+	resDesc.SampleDesc.Quality	= 0;
+	resDesc.MipLevels			= 1;
+	resDesc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	resDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;			// レイアウトについては決定しない
+	resDesc.Flags				= D3D12_RESOURCE_FLAG_NONE;				// とくにフラグなし
+
+	D3D12_HEAP_PROPERTIES texHeapProp = {};
+	texHeapProp.Type					= D3D12_HEAP_TYPE_CUSTOM;				// 特殊な設定なのでdefaultでもuploadでもない
+	texHeapProp.CPUPageProperty			= D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;	// ライトバックで
+	texHeapProp.MemoryPoolPreference	= D3D12_MEMORY_POOL_L0;					// 転送がL0つまりCPU側から直で
+	texHeapProp.CreationNodeMask		= 0;									// 単一アダプタのため0
+	texHeapProp.VisibleNodeMask			= 0;									// 単一アダプタのため0
+
+	ID3D12Resource* gradBuff = nullptr;
+	auto result = _dev->CreateCommittedResource(
+		&texHeapProp,
+		D3D12_HEAP_FLAG_NONE,// 特に指定なし
+		&resDesc,
+		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+		nullptr,
+		IID_PPV_ARGS(&gradBuff)
+	);
+
+	if (FAILED(result))
+	{
+		return nullptr;
+	}
+
+	// 上が白くて下が黒いテクスチャデータを作成
+	std::vector<unsigned int> data(4 * 256);
+	auto it = data.begin();
+	unsigned int c = 0xff;
+	for (; it != data.end(); it += 4) {
+		auto col = (c << 0xff) | (c << 16) | (c << 8) | c;
+		std::fill(it, it + 4, col);
+		--c;
+	}
+
+	result = gradBuff->WriteToSubresource(
+		0, 
+		nullptr, 
+		data.data(),
+		4 * sizeof(unsigned int),
+		sizeof(unsigned int) * (UINT)data.size()
+	);
+
+	return gradBuff;
+}
+
 // 白テクスチャの作成
 ID3D12Resource* CreateWhiteTexture() {
 
@@ -579,8 +637,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// ウィンドウ表示
 	ShowWindow(hwnd, SW_SHOW);
 
-	auto whiteTex = CreateWhiteTexture();
-	auto blackTex = CreateBlackTexture();
+	auto whiteTex	= CreateWhiteTexture();
+	auto blackTex	= CreateBlackTexture();
+	auto gradTex	= CreateGrayGradationTexture();
 
 	// PMDヘッダ構造体
 	struct PMDHeader {
@@ -712,6 +771,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	vector<ID3D12Resource*> textureResources(materialNum);
 	vector<ID3D12Resource*> sphResources(materialNum);
 	vector<ID3D12Resource*> spaResources(materialNum);
+	vector<ID3D12Resource*> toonResources(materialNum);
 
 	// PMDマテリアル情報の読み込み
 	std::vector<PMDMaterial> pmdMaterials(materialNum);
@@ -719,17 +779,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// コピー
 	for (int i = 0; i < pmdMaterials.size(); ++i)
 	{
-		materials[i].indicesNum				= pmdMaterials[i].indicesNum;
-		materials[i].material.diffuse		= pmdMaterials[i].diffuse;
-		materials[i].material.alpha			= pmdMaterials[i].alpha;
-		materials[i].material.specular		= pmdMaterials[i].specular;
-		materials[i].material.specularity	= pmdMaterials[i].specularity;
-		materials[i].material.ambient		= pmdMaterials[i].ambient;
-		materials[i].additional.toonIdx		= pmdMaterials[i].toonIdx;
+		materials[i].indicesNum = pmdMaterials[i].indicesNum;
+		materials[i].material.diffuse = pmdMaterials[i].diffuse;
+		materials[i].material.alpha = pmdMaterials[i].alpha;
+		materials[i].material.specular = pmdMaterials[i].specular;
+		materials[i].material.specularity = pmdMaterials[i].specularity;
+		materials[i].material.ambient = pmdMaterials[i].ambient;
+		materials[i].additional.toonIdx = pmdMaterials[i].toonIdx;
+	}
+
+	for (int i = 0; i < pmdMaterials.size(); ++i)
+	{
+		// トゥーンリソースの読み込み
+		string toonFilePath = "toon/";
+
+		char toonFileName[16];
+
+		sprintf(toonFileName, "toon%02d.bmp", pmdMaterials[i].toonIdx + 1);
+		toonFilePath += toonFileName;
+		toonResources[i] = LoadTextureFromFile(toonFilePath);
 
 		if (strlen(pmdMaterials[i].texFilePath) == 0)
 		{
 			textureResources[i] = nullptr;
+			continue;
 		}
 
 		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
@@ -849,7 +922,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
 	matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	matDescHeapDesc.NodeMask = 0;
-	matDescHeapDesc.NumDescriptors = materialNum * 4;	// マテリアル数x4(定数,テクスチャ3つ)を指定
+	matDescHeapDesc.NumDescriptors = materialNum * 5;	// マテリアル数x4(定数,テクスチャ3つ)を指定
 	matDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	result = _dev->CreateDescriptorHeap(&matDescHeapDesc, IID_PPV_ARGS(&materialDescHeap));
 
@@ -910,6 +983,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			_dev->CreateShaderResourceView(spaResources[i], &srvDesc, matDescHeapH);
 		}
 		matDescHeapH.ptr += incSize;
+
+		if (toonResources[i] == nullptr) {
+			srvDesc.Format = gradTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(gradTex, &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = toonResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(toonResources[i], &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.ptr += incSize;
+
 	}
 
 	// シェーダ―
@@ -1065,7 +1149,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	descTblRange[1].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	// テクスチャ一つ目（↑のマテリアルとペア）
-	descTblRange[2].NumDescriptors						= 3;	//	テクスチャ3つ(基本とsphとspa)
+	descTblRange[2].NumDescriptors						= 4;	//	テクスチャ4つ(基本とsphとspaとtoon)
 	descTblRange[2].RangeType							= D3D12_DESCRIPTOR_RANGE_TYPE_SRV;	// 種別はテクスチャ
 	descTblRange[2].BaseShaderRegister					= 0;	// 0番スロットから
 	descTblRange[2].OffsetInDescriptorsFromTableStart	= D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -1264,7 +1348,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();	// ヒープ先頭
 		unsigned int idxOffset = 0;
 
-		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 4;
+		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 5;
 		for (auto& m : materials) {
 			_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
 			_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
@@ -1304,8 +1388,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 
 	// 解放
+	safeRelease(gradTex);
 	safeRelease(blackTex);
 	safeRelease(whiteTex);
+	for (auto toon : toonResources)
+	{
+		safeRelease(toon);
+	}
 	for (auto spa : spaResources)
 	{
 		safeRelease(spa);
