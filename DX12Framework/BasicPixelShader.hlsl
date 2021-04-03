@@ -5,6 +5,7 @@ Texture2D<float4> spa:register(t2);		// 2番スロットに設定されたテクスチャ(加算)
 Texture2D<float4> toon:register(t3);	// 3番スロットに設定されたテクスチャ(トゥーン)
 
 SamplerState smp:register(s0);			// 0番スロットに設定されたサンプラ
+SamplerState smpToon:register(s1);		// 1番スロットに設定されたサンプラ
 
 // 定数バッファ0
 cbuffer SceneData : register(b0) {
@@ -26,7 +27,7 @@ float4 BasicPS(BasicType input) : SV_TARGET{
 
 	// ディフューズ計算
 	float diffuseB = saturate(dot(-light, input.normal));
-	float4 toonDif = toon.Sample(smp, float2(0, 1.0 - diffuseB));
+	float4 toonDif = toon.Sample(smpToon, float2(0, 1.0 - diffuseB));
 
 	// 光の反射ベクトル
 	float3 refLight = normalize(reflect(light, input.normal.xyz));

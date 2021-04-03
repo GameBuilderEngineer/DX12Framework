@@ -1168,19 +1168,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	rootSignatureDesc.pParameters = rootparam;	// ルートパラメータの先頭アドレス
 	rootSignatureDesc.NumParameters = 2;		// ルートパラメータ数
 
-	D3D12_STATIC_SAMPLER_DESC samplerDesc = {};
-	samplerDesc.AddressU			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 横繰り返し
-	samplerDesc.AddressV			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 縦繰り返し
-	samplerDesc.AddressW			= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 奥繰り返し
-	samplerDesc.BorderColor			= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;	// ボーダーの時は黒
-	samplerDesc.Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;				// 補間しない（ニアレストネイバー）
-	samplerDesc.MaxLOD				= D3D12_FLOAT32_MAX;							// ミップマップ最大値
-	samplerDesc.MinLOD				= 0.0f;											// ミップマップ最小値
-	samplerDesc.ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;					// オーバーサンプリングの際リサンプリングしない
-	samplerDesc.ShaderVisibility	= D3D12_SHADER_VISIBILITY_PIXEL;				// ピクセルシェーダーからのみ可視
+	D3D12_STATIC_SAMPLER_DESC samplerDesc[2] = {};
+	samplerDesc[0].AddressU				= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 横繰り返し
+	samplerDesc[0].AddressV				= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 縦繰り返し
+	samplerDesc[0].AddressW				= D3D12_TEXTURE_ADDRESS_MODE_WRAP;				// 奥繰り返し
+	samplerDesc[0].BorderColor			= D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;	// ボーダーの時は黒
+	samplerDesc[0].Filter				= D3D12_FILTER_MIN_MAG_MIP_POINT;				// 補間しない（ニアレストネイバー）
+	samplerDesc[0].MaxLOD				= D3D12_FLOAT32_MAX;							// ミップマップ最大値
+	samplerDesc[0].MinLOD				= 0.0f;											// ミップマップ最小値
+	samplerDesc[0].ComparisonFunc		= D3D12_COMPARISON_FUNC_NEVER;					// オーバーサンプリングの際リサンプリングしない
+	samplerDesc[0].ShaderVisibility		= D3D12_SHADER_VISIBILITY_PIXEL;				// ピクセルシェーダーからのみ可視
 
-	rootSignatureDesc.pStaticSamplers	= &samplerDesc;
-	rootSignatureDesc.NumStaticSamplers = 1;
+	samplerDesc[1] = samplerDesc[0];	// 変更点以外をコピー
+	samplerDesc[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;	// 繰り返さない
+	samplerDesc[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;	// 繰り返さない
+	samplerDesc[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;	// 繰り返さない
+	samplerDesc[1].ShaderRegister = 1;							// シェーダ―スロット番号を忘れないように
+
+	rootSignatureDesc.pStaticSamplers	= samplerDesc;
+	rootSignatureDesc.NumStaticSamplers = 2;
 
 	ID3DBlob* rootSigBlob = nullptr;
 	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
