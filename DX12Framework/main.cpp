@@ -1043,17 +1043,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// 先頭を記録
 	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(materialDescHeap->GetCPUDescriptorHandleForHeapStart());
-	UINT incSize;
-	matDescHeapH.Offset(incSize);
+	auto incSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	{/*
 		auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
-		auto incSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	*/}
 	
 	for (unsigned int i = 0; i < materialNum; ++i) {
 		// マテリアル固定バッファビュー
 		_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
-		matDescHeapH.ptr += incSize;
+		matDescHeapH.Offset(incSize);
+		//matDescHeapH.ptr += incSize;
 		matCBVDesc.BufferLocation += materialBuffSize;
 
 		// シェーダ―リソースビュー
@@ -1068,7 +1067,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			srvDesc.Format = textureResources[i]->GetDesc().Format;
 			_dev->CreateShaderResourceView(textureResources[i], &srvDesc, matDescHeapH);
 		}
-		matDescHeapH.ptr += incSize;
+		matDescHeapH.Offset(incSize);
+		//matDescHeapH.ptr += incSize;
 
 		// スフィアマップ用ビューの作成
 		if (sphResources[i] == nullptr) {
@@ -1079,7 +1079,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			srvDesc.Format = sphResources[i]->GetDesc().Format;
 			_dev->CreateShaderResourceView(sphResources[i], &srvDesc, matDescHeapH);
 		}
-		matDescHeapH.ptr += incSize;
+		matDescHeapH.Offset(incSize);
+		//matDescHeapH.ptr += incSize;
 
 		// 加算スフィアマップ用ビューの作成
 		if (spaResources[i] == nullptr) {
@@ -1090,7 +1091,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			srvDesc.Format = spaResources[i]->GetDesc().Format;
 			_dev->CreateShaderResourceView(spaResources[i], &srvDesc, matDescHeapH);
 		}
-		matDescHeapH.ptr += incSize;
+		matDescHeapH.Offset(incSize);
+		//matDescHeapH.ptr += incSize;
 
 		if (toonResources[i] == nullptr) {
 			srvDesc.Format = gradTex->GetDesc().Format;
@@ -1100,7 +1102,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			srvDesc.Format = toonResources[i]->GetDesc().Format;
 			_dev->CreateShaderResourceView(toonResources[i], &srvDesc, matDescHeapH);
 		}
-		matDescHeapH.ptr += incSize;
+		matDescHeapH.Offset(incSize);
+		//matDescHeapH.ptr += incSize;
 
 	}
 
