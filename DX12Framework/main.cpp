@@ -11,7 +11,7 @@
 #include<DirectXTex.h>
 #include<d3dx12.h>
 #include<dxgidebug.h>
-
+#include<wrl.h>
 #ifdef _DEBUG
 #include<iostream>
 #endif
@@ -24,6 +24,7 @@
 
 using namespace DirectX;
 using namespace std;
+using namespace Microsoft::WRL;
 
 template <class T>
 void safeRelease(T* p)
@@ -56,12 +57,12 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 const unsigned int window_width = 1280;
 const unsigned int window_height = 720;
 
-IDXGIFactory4* _dxgiFactory = nullptr;
-ID3D12Device* _dev = nullptr;
-ID3D12CommandAllocator* _cmdAllocator = nullptr;
-ID3D12GraphicsCommandList* _cmdList = nullptr;
-ID3D12CommandQueue* _cmdQueue = nullptr;
-IDXGISwapChain4* _swapchain = nullptr;
+ComPtr<IDXGIFactory4>				_dxgiFactory	= nullptr;
+ComPtr<ID3D12Device>				_dev			= nullptr;
+ComPtr<ID3D12CommandAllocator>		_cmdAllocator	= nullptr;
+ComPtr<ID3D12GraphicsCommandList>	_cmdList		= nullptr;
+ComPtr<ID3D12CommandQueue>			_cmdQueue		= nullptr;
+ComPtr<IDXGISwapChain4>				_swapchain		= nullptr;
 
 // モデルのパスとテクスチャのパスから合成パスを得る
 //	@param	modelPath	アプリケーションから見たpmdモデルのパス
@@ -421,7 +422,7 @@ void EnableDebugLayer() {
 }
 
 // スワップチェイン生成関数
-HRESULT CreateSwapChain(const HWND& hwnd, IDXGIFactory4*& dxgiFactory) {
+HRESULT CreateSwapChain(const HWND& hwnd, ComPtr<IDXGIFactory4> dxgiFactory) {
 
 	// スワップチェインの作成
 	DXGI_SWAP_CHAIN_DESC1 swapchainDesc = {};
@@ -438,12 +439,12 @@ HRESULT CreateSwapChain(const HWND& hwnd, IDXGIFactory4*& dxgiFactory) {
 	swapchainDesc.AlphaMode				= DXGI_ALPHA_MODE_UNSPECIFIED;
 	swapchainDesc.Flags					= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	
-	return _dxgiFactory->CreateSwapChainForHwnd(_cmdQueue,
+	return _dxgiFactory->CreateSwapChainForHwnd(_cmdQueue.Get(),
 		hwnd,
 		&swapchainDesc,
 		nullptr,
 		nullptr,
-		(IDXGISwapChain1**)&_swapchain);
+		(IDXGISwapChain1**)_swapchain.ReleaseAndGetAddressOf());
 }
 
 
@@ -477,7 +478,7 @@ void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass) {
 HRESULT InitializeDXGIDevice() {
 	UINT flagsDXGI = 0;
 	flagsDXGI |= DXGI_CREATE_FACTORY_DEBUG;
-	auto result = CreateDXGIFactory2(flagsDXGI, IID_PPV_ARGS(&_dxgiFactory));
+	auto result = CreateDXGIFactory2(flagsDXGI, IID_PPV_ARGS(_dxgiFactory.ReleaseAndGetAddressOf()));
 
 	// DirectX12初期化
 	// フィーチャレベル列挙
@@ -513,7 +514,7 @@ HRESULT InitializeDXGIDevice() {
 	//Direct3Dデバイスの初期化
 	D3D_FEATURE_LEVEL featureLevel;
 	for (auto l : levels) {
-		if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(&_dev)) == S_OK) {
+		if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(_dev.ReleaseAndGetAddressOf())) == S_OK) {
 			featureLevel = l;
 			result = S_OK;
 			break;
@@ -529,14 +530,14 @@ HRESULT InitializeDXGIDevice() {
 
 HRESULT InitializeCommand() {
 	// コマンドアロケータの作成
-	auto result = _dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_cmdAllocator));
+	auto result = _dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(_cmdAllocator.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		assert(0);
 		return result;
 	}
 
 	// コマンドリストの作成
-	result = _dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _cmdAllocator, nullptr, IID_PPV_ARGS(&_cmdList));
+	result = _dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, _cmdAllocator.Get(), nullptr, IID_PPV_ARGS(_cmdList.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		assert(0);
 		return result;
@@ -548,7 +549,7 @@ HRESULT InitializeCommand() {
 	cmdQueueDesc.NodeMask	= 0;
 	cmdQueueDesc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;		// プライオリティ特に指定なし
 	cmdQueueDesc.Type		= D3D12_COMMAND_LIST_TYPE_DIRECT;			// ここはコマンドリストと合わせる
-	result = _dev->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&_cmdQueue));	// コマンドキュー
+	result = _dev->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(_cmdQueue.ReleaseAndGetAddressOf()));	// コマンドキュー
 
 	if (FAILED(result)) {
 		assert(0);
@@ -608,11 +609,14 @@ void ReportD3DObject()
 
 void releaseResource()
 {
-	safeRelease(_dxgiFactory);
-	safeRelease(_cmdAllocator);
-	safeRelease(_cmdList);
-	safeRelease(_cmdQueue);
-	safeRelease(_swapchain);
+	// スマートポインタにより不要に
+	{/*
+		safeRelease(_dxgiFactory);
+		safeRelease(_cmdAllocator);
+		safeRelease(_cmdList);
+		safeRelease(_cmdQueue);
+		safeRelease(_swapchain);
+	*/}
 }
 
 #ifdef _DEBUG
@@ -1533,7 +1537,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		_cmdList->Close();
 
 		// コマンドリストの実行
-		ID3D12CommandList* cmdlists[] = { _cmdList };
+		ID3D12CommandList* cmdlists[] = { _cmdList.Get() };
 		_cmdQueue->ExecuteCommandLists(1, cmdlists);
 		// 待ち
 		_cmdQueue->Signal(_fence, ++_fenceVal);
@@ -1544,8 +1548,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		// フリップ
 		_swapchain->Present(1, 0);
-		_cmdAllocator->Reset();						//キューをクリア
-		_cmdList->Reset(_cmdAllocator, nullptr);	//再びコマンドリストをためる準備
+		_cmdAllocator->Reset();							//キューをクリア
+		_cmdList->Reset(_cmdAllocator.Get(), nullptr);	//再びコマンドリストをためる準備
 
 	}
 	UnregisterClass(windowClass.lpszClassName, windowClass.hInstance);
@@ -1595,6 +1599,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #ifdef _DEBUG
 	ReportD3DObject();
 #endif
-	safeRelease(_dev);
+	//safeRelease(_dev);
 	return 0;
 }
