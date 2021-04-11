@@ -27,6 +27,14 @@ void DebugOutputFormatString(const char* format, ...) {
 #endif
 }
 
+LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
+	if (msg == WM_DESTROY) {	// ウィンドウ破棄時呼び出し
+		PostQuitMessage(0);		// OSに対して終了メッセージ
+		return 0;
+	}
+	return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
 void Application::Run()
 {
 
