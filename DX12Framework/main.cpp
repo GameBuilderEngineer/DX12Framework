@@ -18,32 +18,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-//コンスタントバッファで行列を転送
-//#define _CRT_SECURE_NO_WARNINGS
-//#include<Windows.h>
-//#include<tchar.h>
-//#include<d3d12.h>
-//#include<dxgi1_6.h>
-//#include<DirectXMath.h>
-//#include<vector>
-//#include<map>
-//#include<d3dcompiler.h>
-//#include<DirectXTex.h>
-//#include<d3dx12.h>
-//#include<dxgidebug.h>
-//#include<wrl.h>
-//#ifdef _DEBUG
-//#include<iostream>
-//#endif
-//
-//#pragma comment(lib,"DirectXTex.lib")
-//#pragma comment(lib,"d3d12.lib")
-//#pragma comment(lib,"dxgi.lib")
-//#pragma comment(lib,"d3dcompiler.lib")
-//
-//using namespace DirectX;
-//using namespace std;
-//using namespace Microsoft::WRL;
 //
 //template <class T>
 //void safeRelease(T* p)

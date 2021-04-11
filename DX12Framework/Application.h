@@ -1,4 +1,18 @@
 ﻿#pragma once
+#define _CRT_SECURE_NO_WARNINGS
+#include<Windows.h>
+#include<tchar.h>
+#include<d3d12.h>
+#include<dxgi1_6.h>
+#include<DirectXMath.h>
+#include<vector>
+#include<map>
+#include<d3dcompiler.h>
+#include<DirectXTex.h>
+#include<d3dx12.h>
+#include<dxgidebug.h>
+#include<wrl.h>
+
 class Application
 {
 private:
