@@ -27,8 +27,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	p = nullptr;
 //}
 //
-//const unsigned int window_width = 1280;
-//const unsigned int window_height = 720;
 //
 //ComPtr<IDXGIFactory4>				_dxgiFactory	= nullptr;
 //ComPtr<ID3D12Device>				_dev			= nullptr;
