@@ -15,6 +15,17 @@ using namespace DirectX;
 using namespace std;
 using namespace Microsoft::WRL;
 
+///@brief コンソール画面にフォーマット付き文字列を表示
+///@param format フォーマット
+///@param 可変長引数
+void DebugOutputFormatString(const char* format, ...) {
+#ifdef _DEBUG
+	va_list valist;
+	va_start(valist, format);
+	vprintf(format, valist);
+	va_end(valist);
+#endif
+}
 
 void Application::Run()
 {
