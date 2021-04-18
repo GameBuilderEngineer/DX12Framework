@@ -669,7 +669,7 @@ HRESULT Application::CreateBasicGraphicsPipeline()
 	};
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
-	gpipeline.pRootSignature		= nullptr;
+	gpipeline.pRootSignature		= _rootsignature.Get();
 	gpipeline.VS = CD3DX12_SHADER_BYTECODE(_vsBlob.Get());
 	gpipeline.PS = CD3DX12_SHADER_BYTECODE(_psBlob.Get());
 	{/*
@@ -752,6 +752,12 @@ HRESULT Application::CreateBasicGraphicsPipeline()
 	gpipeline.PrimitiveTopologyType				= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;	//三角形で構成
 	gpipeline.NumRenderTargets					= 1;							//今は１つのみ
 	gpipeline.RTVFormats[0]						= DXGI_FORMAT_R8G8B8A8_UNORM;	//0～1に正規化されたRGBA
+
+	result = _dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.ReleaseAndGetAddressOf()));
+	if (FAILED(result)) {
+		assert(0);
+	}
+	return result;
 }
 
 HRESULT Application::CreateRootSignature()

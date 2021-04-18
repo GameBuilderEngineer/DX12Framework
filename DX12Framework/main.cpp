@@ -626,9 +626,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	result = _dev->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(rootsignature.ReleaseAndGetAddressOf()));
 //	rootSigBlob->Release();
 //
-//	gpipeline.pRootSignature = rootsignature.Get();
-//	ComPtr<ID3D12PipelineState> _pipelinestate = nullptr;
-//	result = _dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.ReleaseAndGetAddressOf()));
 //
 //	//シェーダ側に渡すための基本的な行列データ
 //	struct SceneData {
