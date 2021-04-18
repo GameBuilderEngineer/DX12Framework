@@ -426,9 +426,34 @@ HRESULT Application::CreateSwapChain(const HWND& hwnd, ComPtr<IDXGIFactory6> dxg
 		(IDXGISwapChain1**)_swapchain.ReleaseAndGetAddressOf());
 }
 
+// ゲームウィンドウの生成
 void Application::CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass)
 {
-
+	HINSTANCE hInst = GetModuleHandle(nullptr);
+	
+	//ウィンドウクラス生成＆登録
+	windowClass.cbSize			= sizeof(WNDCLASSEX);
+	windowClass.lpfnWndProc		= (WNDPROC)WindowProcedure;	// コールバック関数の指定
+	windowClass.lpszClassName	= _T("DirectXTex");			// アプリケーションクラス名
+	windowClass.hInstance		= GetModuleHandle(0);		// ハンドルの取得
+	RegisterClassEx(&windowClass);							// アプリケーションクラス
+	
+	RECT wrc = { 0,0,window_width, window_height };			// ウィンドウサイズを決める
+	AdjustWindowRect(&wrc, WS_OVERLAPPEDWINDOW, false);		// ウィンドウのサイズを関数を使って補正する
+	
+	// ウィンドウオブジェクトの生成
+	hwnd = CreateWindow(
+		windowClass.lpszClassName,	// クラス名指定
+		_T("DX12テスト"),			// タイトルバーの文字
+		WS_OVERLAPPEDWINDOW,		// タイトルバーと境界線
+		CW_USEDEFAULT,				// 表示X座標はOS
+		CW_USEDEFAULT,				// 表示Y座標はOS
+		wrc.right - wrc.left,		// ウィンドウ幅
+		wrc.bottom - wrc.top,		// ウィンドウ高
+		nullptr,					// 親ウィンドウハンドル
+		nullptr,					// メニューハンドル
+		windowClass.hInstance,		// 呼び出しアプリケーションハンドル
+		nullptr);					// 追加パラメータ
 }
 
 HRESULT Application::InitializeDXGIDevice()
