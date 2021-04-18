@@ -41,7 +41,7 @@ private:
 	std::map < std::string, LoadLambda_t> _loadLambdaTable;
 
 	// マテリアル周り
-	unsigned int materialNum;
+	unsigned int _materialNum;
 	Microsoft::WRL::ComPtr<ID3D12Resource>				_materialBuffer = nullptr;
 	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
 

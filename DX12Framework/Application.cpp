@@ -967,6 +967,211 @@ HRESULT Application::CreateDepthStencilView()
 
 }
 
+// PMDファイルのロード
+HRESULT Application::LoadPMDFile(const char* path)
+{
+	// PMDヘッダ構造体
+	struct PMDHeader {
+		float version;			// 例：00 00 80 3F == 1.00
+		char model_name[20];	// モデル名
+		char comment[256];		// モデルコメント
+	};
+	char signature[3];
+	PMDHeader pmdheader = {};
+
+	string strModelPath = path;
+
+	auto fp = fopen(strModelPath.c_str(), "rb");
+	if (fp == nullptr) {
+		assert(0);
+		return ERROR_FILE_NOT_FOUND;
+	}
+	fread(signature, sizeof(signature), 1, fp);
+	fread(&pmdheader, sizeof(pmdheader), 1, fp);
+	
+	unsigned int vertNum;	// 頂点数
+	fread(&vertNum, sizeof(vertNum), 1, fp);
+
+#pragma pack(1)// ここから1バイトパッキング…アライメントは発生しない
+	// PMDマテリアル構造体
+	struct PMDMaterial {
+		XMFLOAT3 diffuse;			// ディフューズ色
+		float alpha;				// ディフューズα
+		float specularity;			// スペキュラの強さ（乗算値）
+		XMFLOAT3 specular;			// スペキュラ色
+		XMFLOAT3 ambient;			// アンビエント色
+		unsigned char toonIdx;		// トゥーン番号
+		unsigned char edgeFlg;		// マテリアル毎の輪郭線フラグ
+		// 注意：2バイトのパディング
+		unsigned int indicesNum;	// このマテリアルが割り当たるインデックス数
+		char texFilePath[20];		// テクスチャファイル名(プラスアルファ)
+	};// 70バイトのはず…でもパディングが発生するため72バイト
+#pragma pack()// 1バイトパッキング解除
+
+	constexpr unsigned int pmdvertex_size = 38;	// 頂点１つあたりのサイズ
+	unsigned int verticesSize = vertNum * pmdvertex_size;
+	std::vector<unsigned char> vertices(verticesSize);	// バッファ確保
+	fread(vertices.data(), vertices.size(), 1, fp);// 読み込み
+
+	unsigned int indicesNum;// インデックス数
+	fread(&indicesNum, sizeof(indicesNum), 1, fp);
+
+	// 頂点バッファの作成
+	// UPLOAD(確保は可能)
+	auto vertHeapProp	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto vertBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(vertices.size());
+	auto result = _dev->CreateCommittedResource(
+		&vertHeapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&vertBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(_vertBuffer.ReleaseAndGetAddressOf()));
+
+	// 作ったバッファに頂点データをコピー
+	unsigned char* vertMap = nullptr;
+	result = _vertBuffer->Map(0, nullptr, (void**)&vertMap);
+	std::copy(vertices.begin(), vertices.end(), vertMap);
+	_vertBuffer->Unmap(0, nullptr);
+	
+	// 頂点バッファビューの作成
+	_vbView.BufferLocation	= _vertBuffer->GetGPUVirtualAddress();	// バッファの仮想アドレス
+	_vbView.SizeInBytes		= (UINT)vertices.size();				// 全バイト数
+	_vbView.StrideInBytes	= pmdvertex_size;						// 1頂点あたりのバイト数
+	
+	std::vector<unsigned short> indices(indicesNum);
+	fread(indices.data(), indices.size() * sizeof(indices[0]), 1, fp);
+
+	// インデックスバッファーの作成
+	// 設定は、バッファのサイズ以外頂点バッファの設定を使いまわしてOK
+	auto indexHeapProp		= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto indexBufferDesc	= CD3DX12_RESOURCE_DESC::Buffer(indices.size()*sizeof(indices[0]));
+	result = _dev->CreateCommittedResource(
+		&indexHeapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&indexBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(_idxBuffer.ReleaseAndGetAddressOf()));
+
+	// 作ったバッファにインデックスデータをコピー
+	unsigned short* mappedIdx = nullptr;
+	_idxBuffer->Map(0, nullptr, (void**)&mappedIdx);
+	std::copy(indices.begin(), indices.end(), mappedIdx);
+	_idxBuffer->Unmap(0, nullptr);
+
+	// インデックスバッファビューを作成
+	_ibView.BufferLocation	= _idxBuffer->GetGPUVirtualAddress();
+	_ibView.Format			= DXGI_FORMAT_R16_UINT;
+	_ibView.SizeInBytes		= (UINT)indices.size()*sizeof(indices[0]);
+
+
+	// マテリアル数を読み込み
+	fread(&_materialNum, sizeof(_materialNum), 1, fp);
+
+	// リソースサイズを設定
+	_materials.resize(_materialNum);
+	_textureResources.resize(_materialNum);
+	_sphResources.resize(_materialNum);
+	_spaResources.resize(_materialNum);
+	_toonResources.resize(_materialNum);
+
+	// PMDマテリアル情報の読み込み
+	std::vector<PMDMaterial> pmdMaterials(_materialNum);
+	fread(pmdMaterials.data(), pmdMaterials.size() * sizeof(PMDMaterial), 1, fp);
+	// コピー
+	for (int i = 0; i < pmdMaterials.size(); ++i)
+	{
+		_materials[i].indicesNum			= pmdMaterials[i].indicesNum;
+		_materials[i].material.diffuse		= pmdMaterials[i].diffuse;
+		_materials[i].material.alpha		= pmdMaterials[i].alpha;
+		_materials[i].material.specular		= pmdMaterials[i].specular;
+		_materials[i].material.specularity	= pmdMaterials[i].specularity;
+		_materials[i].material.ambient		= pmdMaterials[i].ambient;
+		_materials[i].additional.toonIdx	= pmdMaterials[i].toonIdx;
+	}
+	for (int i = 0; i < pmdMaterials.size(); ++i)
+	{
+		// トゥーンリソースの読み込み
+		string toonFilePath = "toon/";
+	
+		char toonFileName[16];
+	
+		sprintf(toonFileName, "toon%02d.bmp", pmdMaterials[i].toonIdx + 1);
+		toonFilePath += toonFileName;
+		_toonResources[i] = LoadTextureFromFile(toonFilePath);
+	
+		if (strlen(pmdMaterials[i].texFilePath) == 0)
+		{
+			_textureResources[i] = nullptr;
+			continue;
+		}
+	
+		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
+		string texFileName = pmdMaterials[i].texFilePath;
+		string sphFileName = "";
+		string spaFileName = "";
+		
+		if (std::count(texFileName.begin(), texFileName.end(), '*') > 0) {//スプリッタがある
+			auto namepair = SplitFileName(texFileName);
+			if (GetExtension(namepair.first) == "sph")
+			{
+				sphFileName = namepair.first;
+				texFileName = namepair.second;
+			}
+			else if (GetExtension(namepair.first) == "spa")
+			{
+				spaFileName = namepair.first;
+				texFileName = namepair.second;
+			}
+			else
+			{
+				texFileName = namepair.first;
+				if (GetExtension(namepair.second) == "sph")
+				{
+					sphFileName = namepair.second;
+				}
+				else if (GetExtension(namepair.second) == "spa")
+				{
+					spaFileName = namepair.second;
+				}
+			}
+		}
+		else {
+			if (GetExtension(texFileName) == "sph")
+			{
+				sphFileName = texFileName;
+				texFileName = "";
+			}
+			else if (GetExtension(texFileName) == "spa")
+			{
+				spaFileName = texFileName;
+				texFileName = "";
+			}
+		}
+		
+		// モデルとテクスチャパスからアプリケーションからのテクスチャパスを得る
+		// テクスチャの読み込み
+		if (texFileName != "") {
+			auto texFilePath = GetTexturePathFromModelAndTexPath(strModelPath, texFileName.c_str());
+			_textureResources[i] = LoadTextureFromFile(texFilePath);
+		}
+		// 乗算スフィアマップの読み込み
+		if (sphFileName != "") {
+			auto sphFilePath = GetTexturePathFromModelAndTexPath(strModelPath, sphFileName.c_str());
+			_sphResources[i] = LoadTextureFromFile(sphFilePath);
+		}
+		// 加算スフィアマップの読み込み
+		if (spaFileName != "") {
+			auto spaFilePath = GetTexturePathFromModelAndTexPath(strModelPath, spaFileName.c_str());
+			_spaResources[i] = LoadTextureFromFile(spaFilePath);
+		}
+	}
+	
+	fclose(fp);
+
+}
+
 HRESULT Application::CreateSceneTransformView()
 {
 	return S_OK;
