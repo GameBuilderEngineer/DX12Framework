@@ -47,7 +47,7 @@ private:
 
 	// デフォルトのテクスチャ（白、黒、グレイスケールグラデーション）
 	Microsoft::WRL::ComPtr<ID3D12Resource> _whiteTex = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12Resource> _balckTex = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource> _blackTex = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> _gradTex = nullptr;
 
 	// 座標変換系行列

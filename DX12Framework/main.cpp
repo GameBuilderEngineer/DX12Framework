@@ -101,94 +101,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	//string strModelPath = "Model/亞北ネル.pmd";
 //	//string strModelPath = "Model/弱音ハク.pmd";
 //
-//
+
 //	
-//	// 通常テクスチャビュー作成
-//	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-//	srvDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;				// デフォルト
-//	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;	//
-//	srvDesc.ViewDimension			= D3D12_SRV_DIMENSION_TEXTURE2D;			// 2Dテクスチャ
-//	srvDesc.Texture2D.MipLevels		= 1;										// ミップマップは使用しないので１
-//
-//	// 先頭を記録
-//	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(materialDescHeap->GetCPUDescriptorHandleForHeapStart());
-//	auto incSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-//	{/*
-//		auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
-//	*/}
-//	
-//	for (unsigned int i = 0; i < materialNum; ++i) {
-//		// マテリアル固定バッファビュー
-//		_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
-//		matDescHeapH.Offset(incSize);
-//		//matDescHeapH.ptr += incSize;
-//		matCBVDesc.BufferLocation += materialBuffSize;
-//
-//		// シェーダ―リソースビュー
-//
-//		// テクスチャ用ビューの作成
-//		if (textureResources[i] == nullptr)
-//		{
-//			srvDesc.Format = whiteTex->GetDesc().Format;
-//			_dev->CreateShaderResourceView(whiteTex.Get(), &srvDesc, matDescHeapH);
-//		}
-//		else {
-//			srvDesc.Format = textureResources[i]->GetDesc().Format;
-//			_dev->CreateShaderResourceView(textureResources[i].Get(), &srvDesc, matDescHeapH);
-//		}
-//		matDescHeapH.Offset(incSize);
-//		//matDescHeapH.ptr += incSize;
-//
-//		// スフィアマップ用ビューの作成
-//		if (sphResources[i] == nullptr) {
-//			srvDesc.Format = whiteTex->GetDesc().Format;
-//			_dev->CreateShaderResourceView(whiteTex.Get(), &srvDesc, matDescHeapH);
-//		}
-//		else {
-//			srvDesc.Format = sphResources[i]->GetDesc().Format;
-//			_dev->CreateShaderResourceView(sphResources[i].Get(), &srvDesc, matDescHeapH);
-//		}
-//		matDescHeapH.Offset(incSize);
-//		//matDescHeapH.ptr += incSize;
-//
-//		// 加算スフィアマップ用ビューの作成
-//		if (spaResources[i] == nullptr) {
-//			srvDesc.Format = blackTex->GetDesc().Format;
-//			_dev->CreateShaderResourceView(blackTex.Get(), &srvDesc, matDescHeapH);
-//		}
-//		else {
-//			srvDesc.Format = spaResources[i]->GetDesc().Format;
-//			_dev->CreateShaderResourceView(spaResources[i].Get(), &srvDesc, matDescHeapH);
-//		}
-//		matDescHeapH.Offset(incSize);
-//		//matDescHeapH.ptr += incSize;
-//
-//		if (toonResources[i] == nullptr) {
-//			srvDesc.Format = gradTex->GetDesc().Format;
-//			_dev->CreateShaderResourceView(gradTex.Get(), &srvDesc, matDescHeapH);
-//		}
-//		else {
-//			srvDesc.Format = toonResources[i]->GetDesc().Format;
-//			_dev->CreateShaderResourceView(toonResources[i].Get(), &srvDesc, matDescHeapH);
-//		}
-//		matDescHeapH.Offset(incSize);
-//		//matDescHeapH.ptr += incSize;
-//
-//	}
 //
 
-//	ComPtr<ID3D12RootSignature> rootsignature = nullptr;
-//
-//
-//
-//	//シェーダ側に渡すための基本的な行列データ
-//	struct SceneData {
-//		XMMATRIX world;	// ワールド行列
-//		XMMATRIX view;	// ビュー行列
-//		XMMATRIX proj;	// プロジェクション行列
-//		XMFLOAT3 eye;	// 視点座標
-//	};
-//
 //
 //	MSG msg				= {};
 //	unsigned int frame	= 0;

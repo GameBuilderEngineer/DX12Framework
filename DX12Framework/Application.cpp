@@ -1288,7 +1288,74 @@ HRESULT Application::CreateSceneTransformView()
 
 void Application::CreateMaterialAndTextureView()
 {
+	auto materialBuffSize = matCBVDesc.SizeInBytes;
+	
+	// 通常テクスチャビュー作成
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format					= DXGI_FORMAT_R8G8B8A8_UNORM;				// デフォルト
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;//2Dテクスチャ
+	srvDesc.Texture2D.MipLevels = 1;//ミップレベルは使用しないので１
 
+	// 先頭を記録
+	CD3DX12_CPU_DESCRIPTOR_HANDLE matDescHeapH(_materialDescHeap->GetCPUDescriptorHandleForHeapStart());
+	auto incSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	{/*
+		auto matDescHeapH = materialDescHeap->GetCPUDescriptorHandleForHeapStart();
+	*/}
+
+	for (unsigned int i = 0; i < _materialNum; ++i) {
+		// マテリアル固定バッファビュー
+		_dev->CreateConstantBufferView(&matCBVDesc, matDescHeapH);
+		matDescHeapH.Offset(incSize);
+		matCBVDesc.BufferLocation += materialBuffSize;
+
+		// シェーダ―リソースビュー
+
+		// テクスチャ用ビューの作成
+		if (_textureResources[i] == nullptr)
+		{
+			srvDesc.Format = _whiteTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(_whiteTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = _textureResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(_textureResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.Offset(incSize);
+
+		// スフィアマップ用ビューの作成
+		if (_sphResources[i] == nullptr) {
+			srvDesc.Format = _whiteTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(_whiteTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = _sphResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(_sphResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.Offset(incSize);
+
+		// 加算スフィアマップ用ビューの作成
+		if (_spaResources[i] == nullptr) {
+			srvDesc.Format = _blackTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(_blackTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = _spaResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(_spaResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.Offset(incSize);
+
+		if (_toonResources[i] == nullptr) {
+			srvDesc.Format = _gradTex->GetDesc().Format;
+			_dev->CreateShaderResourceView(_gradTex.Get(), &srvDesc, matDescHeapH);
+		}
+		else {
+			srvDesc.Format = _toonResources[i]->GetDesc().Format;
+			_dev->CreateShaderResourceView(_toonResources[i].Get(), &srvDesc, matDescHeapH);
+		}
+		matDescHeapH.Offset(incSize);
+	}
 }
 
 bool Application::Init() {
