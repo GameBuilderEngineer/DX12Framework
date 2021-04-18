@@ -551,7 +551,39 @@ HRESULT Application::InitializeCommand()
 
 HRESULT Application::CreateFinalRenderTarget(ComPtr<ID3D12DescriptorHeap>& rtvHeaps, vector<ID3D12Resource*>& backBuffers)
 {
-	return S_OK;
+	// デスクリプタヒープの作成
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;	// レンダーターゲットビューなので当然RTV
+	heapDesc.NodeMask		= 0;
+	heapDesc.NumDescriptors = 2;								// 表裏の２つ
+	heapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_NONE;	// 特に指定なし
+
+	auto result = _dev->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(rtvHeaps.ReleaseAndGetAddressOf()));
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	DXGI_SWAP_CHAIN_DESC swcDesc = {};
+	result = _swapchain->GetDesc(&swcDesc);
+	backBuffers.resize(swcDesc.BufferCount);
+
+	D3D12_CPU_DESCRIPTOR_HANDLE handle = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+
+	// SRGBレンダーターゲットビュー設定
+	// これやると色味がよくなるが、バックバッファとの
+	// フォーマットの食い違いによりDebugLayerにエラーが出力される
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format			= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+	rtvDesc.ViewDimension	= D3D12_RTV_DIMENSION_TEXTURE2D;
+
+	for (int i = 0; i < (int)swcDesc.BufferCount; ++i)
+	{
+		result = _swapchain->GetBuffer(i, IID_PPV_ARGS(&backBuffers[i]));
+		rtvDesc.Format = backBuffers[i]->GetDesc().Format;
+		_dev->CreateRenderTargetView(backBuffers[i], &rtvDesc, handle);
+		handle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	}
 }
 
 HRESULT Application::CreateBassicGraphicsPipeline()
