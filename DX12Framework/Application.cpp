@@ -604,8 +604,7 @@ HRESULT Application::CreateFinalRenderTarget(ComPtr<ID3D12DescriptorHeap>& rtvHe
 		scissorrect.right	= scissorrect.left + window_width;	// 切り抜き右座標
 		scissorrect.bottom	= scissorrect.top + window_height;	// 切り抜き下座標
 	*/}
-
-
+	return result;
 }
 
 HRESULT Application::CreateBassicGraphicsPipeline()
