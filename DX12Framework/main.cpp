@@ -189,58 +189,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //		XMFLOAT3 eye;	// 視点座標
 //	};
 //
-//	// 定数バッファ作成
-//	XMMATRIX worldMat = XMMatrixIdentity();
-//	XMFLOAT3 eye(0, 17, -5);
-//	XMFLOAT3 target(0, 17, 0);
-//	XMFLOAT3 up(0, 1, 0);
-//	auto viewMat = XMMatrixLookAtLH(
-//		XMLoadFloat3(&eye),
-//		XMLoadFloat3(&target),
-//		XMLoadFloat3(&up)
-//	);
-//	auto projMat = XMMatrixPerspectiveFovLH(
-//		XM_PIDIV2,	//画角は90°
-//		static_cast<float>(window_width) / static_cast<float>(window_height),	//アス比
-//		1.0f,
-//		100.0f
-//	);
-//
-//	ComPtr<ID3D12Resource> constBuff	= nullptr;
-//	auto heapPropTypeUpload		= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-//	auto matirxCBufferDesc		= CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
-//	result = _dev->CreateCommittedResource(
-//		&heapPropTypeUpload,
-//		D3D12_HEAP_FLAG_NONE,
-//		&matirxCBufferDesc,
-//		D3D12_RESOURCE_STATE_GENERIC_READ,
-//		nullptr,
-//		IID_PPV_ARGS(constBuff.ReleaseAndGetAddressOf())
-//	);
-//
-//	SceneData* mapMatrix = {};	// マップ先を示すポインタ
-//	result = constBuff->Map(0, nullptr, (void**)&mapMatrix);	//マップ
-//	//行列の内容をコピー
-//	mapMatrix->world = worldMat;
-//	mapMatrix->view = viewMat;
-//	mapMatrix->proj = projMat;
-//	mapMatrix->eye = eye;
-//
-//	ComPtr<ID3D12DescriptorHeap> basicDescHeap		= nullptr;
-//	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
-//	descHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// シェーダ―から見える
-//	descHeapDesc.NodeMask		= 0;
-//	descHeapDesc.NumDescriptors = 1;	// CBV１つ
-//	descHeapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-//	result = _dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(basicDescHeap.ReleaseAndGetAddressOf()));
-//
-//	// ディスクリプタの先頭アドレスを取得
-//	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-//	auto basicHeapHandle	= basicDescHeap->GetCPUDescriptorHandleForHeapStart();
-//	cbvDesc.BufferLocation	= constBuff->GetGPUVirtualAddress();
-//	cbvDesc.SizeInBytes		= (UINT)constBuff->GetDesc().Width;
-//	// 定数バッファビューの作成
-//	_dev->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
 //
 //	MSG msg				= {};
 //	unsigned int frame	= 0;

@@ -1228,9 +1228,62 @@ HRESULT Application::CreateMaterialData() {
 	return result;
 }
 
+// 座標変換用ビューの生成
 HRESULT Application::CreateSceneTransformView()
 {
-	return S_OK;
+	// 定数バッファ作成
+	_worldMat = XMMatrixIdentity();
+	XMFLOAT3 eye(0, 17, -5);
+	XMFLOAT3 target(0, 17, 0);
+	XMFLOAT3 up(0, 1, 0);
+	_viewMat = XMMatrixLookAtLH(
+		XMLoadFloat3(&eye),
+		XMLoadFloat3(&target),
+		XMLoadFloat3(&up)
+	);
+	_projMat = XMMatrixPerspectiveFovLH(
+		XM_PIDIV2,	//画角は90°
+		static_cast<float>(window_width) / static_cast<float>(window_height),	//アス比
+		1.0f,
+		100.0f
+	);
+
+	auto heapPropTypeUpload		= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto matirxCBufferDesc		= CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
+	auto result = _dev->CreateCommittedResource(
+		&heapPropTypeUpload,
+		D3D12_HEAP_FLAG_NONE,
+		&matirxCBufferDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(_constBuffer.ReleaseAndGetAddressOf())
+	);
+
+	_mapScene = nullptr;// マップ先を示すポインタ
+	result = _constBuffer->Map(0, nullptr, (void**)&_mapScene);	//マップ
+	//行列の内容をコピー
+	_mapScene->world	= _worldMat;
+	_mapScene->view		= _viewMat;
+	_mapScene->proj		= _projMat;
+	_mapScene->eye		= eye;
+
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
+	descHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;// シェーダ―から見える
+	descHeapDesc.NodeMask		= 0;	// マスクは0
+	descHeapDesc.NumDescriptors = 1;	// CBV１つ
+	descHeapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	result = _dev->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(_basicDescHeap.ReleaseAndGetAddressOf()));
+
+	// ディスクリプタの先頭アドレスを取得
+	auto basicHeapHandle	= _basicDescHeap->GetCPUDescriptorHandleForHeapStart();
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+	cbvDesc.BufferLocation	= _constBuffer->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes		= (UINT)_constBuffer->GetDesc().Width;
+
+	// 定数バッファビューの作成
+	_dev->CreateConstantBufferView(&cbvDesc, basicHeapHandle);
+	return result;
 }
 
 void Application::CreateMaterialAndTextureView()
