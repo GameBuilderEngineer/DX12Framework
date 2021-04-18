@@ -23,6 +23,7 @@ void safeRelease(T* p)
 	p = nullptr;
 }
 
+
 ///@brief コンソール画面にフォーマット付き文字列を表示
 ///@param format フォーマット
 ///@param 可変長引数
@@ -607,9 +608,150 @@ HRESULT Application::CreateFinalRenderTarget(ComPtr<ID3D12DescriptorHeap>& rtvHe
 	return result;
 }
 
-HRESULT Application::CreateBassicGraphicsPipeline()
+// パイプライン初期化
+HRESULT Application::CreateBasicGraphicsPipeline()
 {
-	return S_OK;
+	// シェーダ―
+	ComPtr<ID3DBlob> _vsBlob = nullptr;
+	ComPtr<ID3DBlob> _psBlob = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+
+	// 頂点シェーダーの読み込み
+	auto result = D3DCompileFromFile(
+		L"BasicVertexShader.hlsl",
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"BasicVS",
+		"vs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&_vsBlob,
+		&errorBlob);
+	if (FAILED(result)) {
+		if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+			::OutputDebugStringA("ファイルが見当たりません");
+		}
+		else {
+			errorDebug(errorBlob.Get());
+		}
+		exit(1);
+	}
+
+	// ピクセルシェーダーの読み込み
+	result = D3DCompileFromFile(
+		L"BasicPixelShader.hlsl",
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"BasicPS",
+		"ps_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&_psBlob,
+		&errorBlob);
+	if (FAILED(result)) {
+		if (result == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) {
+			::OutputDebugStringA("ファイルが見当たりません");
+		}
+		else {
+			errorDebug(errorBlob.Get());
+		}
+		exit(1);
+	}
+
+	// インプットレイアウト
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+		{"POSITION",	0,DXGI_FORMAT_R32G32B32_FLOAT,	0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"NORMAL",		0,DXGI_FORMAT_R32G32B32_FLOAT,	0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"TEXCOORD",	0,DXGI_FORMAT_R32G32_FLOAT,		0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"BONE_NO",		0,DXGI_FORMAT_R16G16_UINT,		0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		{"WEIGHT",		0,DXGI_FORMAT_R8_UINT,			0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+		//{"EDGE_FLG",	0,DXGI_FORMAT_R8_UINT,			0,D3D12_APPEND_ALIGNED_ELEMENT,D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+	};
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC gpipeline = {};
+	gpipeline.pRootSignature		= nullptr;
+	gpipeline.VS = CD3DX12_SHADER_BYTECODE(_vsBlob.Get());
+	gpipeline.PS = CD3DX12_SHADER_BYTECODE(_psBlob.Get());
+	{/*
+		gpipeline.VS.pShaderBytecode	= _vsBlob->GetBufferPointer();
+		gpipeline.VS.BytecodeLength		= _vsBlob->GetBufferSize();
+		gpipeline.PS.pShaderBytecode	= _psBlob->GetBufferPointer();
+		gpipeline.PS.BytecodeLength		= _psBlob->GetBufferSize();
+	*/}
+
+	gpipeline.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
+
+	// 貼るシェーダ、ドメインシェーダー、ジオメトリシェーダーは設定しない
+	gpipeline.HS.BytecodeLength		= 0;
+	gpipeline.HS.pShaderBytecode	= nullptr;
+	gpipeline.DS.BytecodeLength		= 0;
+	gpipeline.DS.pShaderBytecode	= nullptr;
+	gpipeline.GS.BytecodeLength		= 0;
+	gpipeline.GS.pShaderBytecode	= nullptr;
+
+	// ラスタライザ(RS)
+	gpipeline.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;	// カリングしない
+	{/*
+		gpipeline.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;	// 中身を塗りつぶす
+		gpipeline.RasterizerState.FrontCounterClockwise = false;
+		gpipeline.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+		gpipeline.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+		gpipeline.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+		gpipeline.RasterizerState.DepthClipEnable = true;			// 深度方向のクリッピングを有効にする
+		gpipeline.RasterizerState.MultisampleEnable = false;		// アンチエイリアシングを使用しない
+		gpipeline.RasterizerState.AntialiasedLineEnable = false;
+		gpipeline.RasterizerState.ForcedSampleCount = 0;
+		gpipeline.RasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+		gpipeline.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;	// カリングしない
+		gpipeline.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;	// 三角形で構成
+	*/}
+
+	// OutputMarger部分
+	// レンダーターゲット
+	gpipeline.NumRenderTargets = 1;// このターゲット数と設定するファーマっと数は一致させる
+	gpipeline.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;	// 0~1に正規化されたRGBA
+
+	// 深度ステンシル
+	gpipeline.DepthStencilState.DepthEnable		= true;
+	gpipeline.DepthStencilState.StencilEnable	= false;
+	gpipeline.DSVFormat							= DXGI_FORMAT_D32_FLOAT;
+	gpipeline.DepthStencilState.DepthFunc		= D3D12_COMPARISON_FUNC_LESS;
+	gpipeline.DepthStencilState.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ALL;
+
+	//ブレンド設定
+	gpipeline.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	{/*
+		gpipeline.BlendState.AlphaToCoverageEnable		= false;
+		gpipeline.BlendState.IndependentBlendEnable		= false;
+		gpipeline.BlendState.RenderTarget->BlendEnable	= true;
+		gpipeline.BlendState.RenderTarget->SrcBlend		= D3D12_BLEND_SRC_ALPHA;
+		gpipeline.BlendState.RenderTarget->DestBlend	= D3D12_BLEND_INV_SRC_ALPHA;
+		gpipeline.BlendState.RenderTarget->BlendOp		= D3D12_BLEND_OP_ADD;
+	*/}
+	
+	gpipeline.NodeMask				= 0;
+	gpipeline.SampleDesc.Count		= 1;	// サンプリングは１ピクセルにつき１
+	gpipeline.SampleDesc.Quality	= 0;
+	gpipeline.SampleMask			= 0xffffffff;// 全部対象
+	gpipeline.Flags					= D3D12_PIPELINE_STATE_FLAG_NONE;
+
+	D3D12_RENDER_TARGET_BLEND_DESC renderTargetBlendDesc = {};
+
+	// ひとまず加算や乗算やαブレンディングは使用しない
+	renderTargetBlendDesc.BlendEnable			= false;
+	renderTargetBlendDesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+	renderTargetBlendDesc.LogicOpEnable			= false;
+
+	gpipeline.BlendState.RenderTarget[0]		= renderTargetBlendDesc;
+
+	gpipeline.InputLayout.pInputElementDescs	= inputLayout;		// レイアウト先頭アドレス
+	gpipeline.InputLayout.NumElements			= _countof(inputLayout);	// レイアウト配列数
+
+	gpipeline.IBStripCutValue					= D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;	// ストリップ時のカットなし
+	gpipeline.PrimitiveTopologyType				= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;	//三角形で構成
+	gpipeline.NumRenderTargets					= 1;							//今は１つのみ
+	gpipeline.RTVFormats[0]						= DXGI_FORMAT_R8G8B8A8_UNORM;	//0～1に正規化されたRGBA
 }
 
 HRESULT Application::CreateRootSignature()

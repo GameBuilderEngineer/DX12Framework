@@ -164,7 +164,7 @@ private:
 	HRESULT InitializeCommand();
 
 	// パイプライン初期化
-	HRESULT CreateBassicGraphicsPipeline();
+	HRESULT CreateBasicGraphicsPipeline();
 	// ルートシグネチャ初期化
 	HRESULT CreateRootSignature();
 
