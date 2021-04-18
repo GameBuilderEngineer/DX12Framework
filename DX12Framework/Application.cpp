@@ -760,6 +760,7 @@ HRESULT Application::CreateBasicGraphicsPipeline()
 	return result;
 }
 
+// ルートシグネチャ初期化
 HRESULT Application::CreateRootSignature()
 {
 	// レンジ
