@@ -901,9 +901,70 @@ void Application::CreateTextureLoaderTable()
 
 HRESULT Application::CreateDepthStencilView()
 {
-	return S_OK;
-}
+	// 深度バッファ作成
+	// 深度バッファの仕様
+	D3D12_RESOURCE_DESC depthResDesc = {};
+	depthResDesc.Dimension			= D3D12_RESOURCE_DIMENSION_TEXTURE2D;		// 2次元のテクスチャデータ
+	depthResDesc.Width				= window_width;								// 幅と高さはレンダーターゲットと同じ
+	depthResDesc.Height				= window_height;							// 上と同じ
+	depthResDesc.DepthOrArraySize	= 1;										// テクスチャ配列でもないし3Dテクスチャでもない
+	depthResDesc.Format				= DXGI_FORMAT_D32_FLOAT;					// 深度値書き込み用フォーマット
+	depthResDesc.SampleDesc.Count	= 1;										// サンプルは1ピクセル当たり1つ
+	depthResDesc.Flags				= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;	// このバッファは深度ステンシルとして使用
+	depthResDesc.MipLevels			= 1;
+	depthResDesc.Layout				= D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthResDesc.Alignment			= 0;
 
+	//デプス用ヒーププロパティ
+	D3D12_HEAP_PROPERTIES depthHeapProp = {};
+	depthHeapProp.Type					= D3D12_HEAP_TYPE_DEFAULT;				// DEFAULTだから後はUNKNOWNでよし
+	depthHeapProp.CPUPageProperty		= D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+	depthHeapProp.MemoryPoolPreference	= D3D12_MEMORY_POOL_UNKNOWN;
+
+	// クリア値の設定
+	CD3DX12_CLEAR_VALUE depthClearValue(DXGI_FORMAT_D32_FLOAT, 1.0f, 0);
+	{/*
+		D3D12_CLEAR_VALUE _depthClearValue	= {};
+		_depthClearValue.DepthStencil.Depth = 1.0f;						// 深さ１（最大値）でクリア
+		_depthClearValue.Format				= DXGI_FORMAT_D32_FLOAT;	// 32bit深度値としてクリア
+	*/}
+
+	// 色のクリア値(未使用)
+	float clrColor[4] = { 1.0f,1.0f,1.0f,1.0f };
+	CD3DX12_CLEAR_VALUE rtClearValue(DXGI_FORMAT_R8G8B8A8_UINT, clrColor);
+
+	// 深度バッファリソースの作成
+	ComPtr<ID3D12Resource> depthBuffer = nullptr;
+	auto result = _dev->CreateCommittedResource(
+		&depthHeapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&depthResDesc,
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,	// デプス書き込みに使用
+		&depthClearValue,
+		IID_PPV_ARGS(depthBuffer.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(result)) {
+		return result;
+	}
+
+	// 深度のためのデスクリプタヒープ作成
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};		// 深度に使用
+	dsvHeapDesc.NumDescriptors = 1;						// 深度ビュー１つのみ
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	//デプスステンシルビューとして利用
+	ComPtr<ID3D12DescriptorHeap> dsvHeap = nullptr;
+	result = _dev->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(dsvHeap.ReleaseAndGetAddressOf()));
+	if (FAILED(result)) {
+		return result;
+	}
+
+	// 深度ビュー作成
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+	dsvDesc.Format			= DXGI_FORMAT_D32_FLOAT;			// デプス値に32bit使用
+	dsvDesc.ViewDimension	= D3D12_DSV_DIMENSION_TEXTURE2D;	// 2Dテクスチャ
+	dsvDesc.Flags			= D3D12_DSV_FLAG_NONE;				// フラグは特になし
+	_dev->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+}
 
 HRESULT Application::CreateSceneTransformView()
 {
