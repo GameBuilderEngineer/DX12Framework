@@ -18,8 +18,8 @@ class Application
 private:
 	// ここに必要な変数(バッファーやヒープなど)を書く
 	// ウィンドウ周り
-	WNDCLASSEX windowClass = {};
-	HWND hwnd;
+	WNDCLASSEX _windowClass = {};
+	HWND _hwnd;
 	// DXGIまわり
 	Microsoft::WRL::ComPtr<IDXGIFactory4>				_dxgiFactory	= nullptr;	// DXGIインターフェイス
 	Microsoft::WRL::ComPtr<IDXGISwapChain4>				_swapchain		= nullptr;	// スワップチェイン

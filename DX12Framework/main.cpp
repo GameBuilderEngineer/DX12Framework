@@ -12,6 +12,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	{
 		return -1;
 	}
+	app.Run();
+	app.Terminate();
 
 	return 0;
 }
@@ -77,8 +79,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	UINT64 _fenceVal = 0;
 //	result = _dev->CreateFence(_fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(_fence.ReleaseAndGetAddressOf()));
 //
-//	// ウィンドウ表示
-//	ShowWindow(hwnd, SW_SHOW);
 //
 //	auto whiteTex	= CreateWhiteTexture();
 //	auto blackTex	= CreateBlackTexture();
@@ -133,13 +133,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //		//	delta *= -1.0f;
 //		//}
 //
-//		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-//			TranslateMessage(&msg);
-//			DispatchMessage(&msg);
-//		}
-//		if (msg.message == WM_QUIT) {
-//			break;
-//		}
 //
 //		// DirectX処理
 //		// バックバッファのインデックスを取得

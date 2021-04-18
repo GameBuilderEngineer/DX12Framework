@@ -871,6 +871,25 @@ HRESULT Application::CreateRootSignature()
 
 void Application::Run()
 {
+	// ウィンドウ表示
+	ShowWindow(_hwnd, SW_SHOW);
+	
+	MSG msg				= {};
+	unsigned int frame	= 0;
+	float angle			= 0.0f;
+	float delta			= 0.005f;
+	float sumDelta		= 0.0f;
+	while (true)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		if (msg.message == WM_QUIT) {
+			break;
+		}
+
+	}
 
 }
 
@@ -1286,6 +1305,7 @@ HRESULT Application::CreateSceneTransformView()
 	return result;
 }
 
+// マテリアル＆テクスチャのビューを作成
 void Application::CreateMaterialAndTextureView()
 {
 	auto materialBuffSize = matCBVDesc.SizeInBytes;
@@ -1359,7 +1379,9 @@ void Application::CreateMaterialAndTextureView()
 }
 
 bool Application::Init() {
-	return false;
+	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
+	CreateGameWindow(_hwnd,_windowClass);
+	return true;
 }
 
 void Application::Terminate() {
