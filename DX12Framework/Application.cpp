@@ -899,6 +899,7 @@ void Application::CreateTextureLoaderTable()
 	};
 }
 
+// デプスステンシルビューの生成
 HRESULT Application::CreateDepthStencilView()
 {
 	// 深度バッファ作成
