@@ -873,6 +873,7 @@ void Application::Run()
 
 }
 
+// テクスチャローダテーブルの作成
 void Application::CreateTextureLoaderTable()
 {
 	_loadLambdaTable["sph"]
