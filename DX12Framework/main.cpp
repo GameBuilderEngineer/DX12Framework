@@ -18,69 +18,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 
 
-//
-//template <class T>
-//void safeRelease(T* p)
-//{
-//	if (p != nullptr)
-//		p->Release();
-//	p = nullptr;
-//}
-//
-//
-//
 
 //HRESULT InitializeDXGIDevice() {
-//	UINT flagsDXGI = 0;
-//	flagsDXGI |= DXGI_CREATE_FACTORY_DEBUG;
-//	auto result = CreateDXGIFactory2(flagsDXGI, IID_PPV_ARGS(_dxgiFactory.ReleaseAndGetAddressOf()));
-//
-//	// DirectX12初期化
-//	// フィーチャレベル列挙
-//	D3D_FEATURE_LEVEL levels[] = {
-//		D3D_FEATURE_LEVEL_12_1,
-//		D3D_FEATURE_LEVEL_12_0,
-//		D3D_FEATURE_LEVEL_11_1,
-//		D3D_FEATURE_LEVEL_11_0,
-//	};
-//
-//	if (FAILED(result)) {
-//		return result;
-//	}
-//
-//	std::vector<IDXGIAdapter*> adapters;
-//	IDXGIAdapter* tmpAdapter = nullptr;
-//	for (int i = 0; _dxgiFactory->EnumAdapters(i, &tmpAdapter) != DXGI_ERROR_NOT_FOUND; ++i) {
-//		adapters.push_back(tmpAdapter);
-//	}
-//
-//	for (auto adpt : adapters) {
-//		DXGI_ADAPTER_DESC adesc = {};
-//		adpt->GetDesc(&adesc);
-//		std::wstring strDesc = adesc.Description;
-//		if (strDesc.find(L"NVIDIA") != std::string::npos) {
-//			tmpAdapter = adpt;
-//			break;
-//		}
-//	}
-//
-//	result = S_FALSE;
-//
-//	//Direct3Dデバイスの初期化
-//	D3D_FEATURE_LEVEL featureLevel;
-//	for (auto l : levels) {
-//		if (D3D12CreateDevice(tmpAdapter, l, IID_PPV_ARGS(_dev.ReleaseAndGetAddressOf())) == S_OK) {
-//			featureLevel = l;
-//			result = S_OK;
-//			break;
-//		}
-//	}
-//
-//	for (auto adpt : adapters) {
-//		safeRelease(adpt);
-//	}
-//
-//	return result;
 //}
 //
 //HRESULT InitializeCommand() {

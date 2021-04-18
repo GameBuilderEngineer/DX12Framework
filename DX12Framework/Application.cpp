@@ -15,6 +15,14 @@ using namespace DirectX;
 using namespace std;
 using namespace Microsoft::WRL;
 
+template <class T>
+void safeRelease(T* p)
+{
+	if (p != nullptr)
+		p->Release();
+	p = nullptr;
+}
+
 ///@brief コンソール画面にフォーマット付き文字列を表示
 ///@param format フォーマット
 ///@param 可変長引数
