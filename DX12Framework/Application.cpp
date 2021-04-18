@@ -875,7 +875,27 @@ void Application::Run()
 
 void Application::CreateTextureLoaderTable()
 {
+	_loadLambdaTable["sph"]
+		= _loadLambdaTable["spa"]
+		= _loadLambdaTable["bmp"]
+		= _loadLambdaTable["png"]
+		= _loadLambdaTable["jpg"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, meta, img);
+	};
 
+	_loadLambdaTable["tga"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromTGAFile(path.c_str(), meta, img);
+	};
+
+	_loadLambdaTable["dds"]
+		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
+	{
+		return LoadFromDDSFile(path.c_str(),DDS_FLAGS_NONE, meta, img);
+	};
 }
 
 HRESULT Application::CreateDepthStencilView()

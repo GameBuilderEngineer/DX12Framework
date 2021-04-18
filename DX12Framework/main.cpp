@@ -72,28 +72,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //
 //	result = CreateFinalRenderTarget(rtvHeaps, _backBuffers);
 //
-//	loadLambdaTable["sph"]
-//		= loadLambdaTable["spa"]
-//		= loadLambdaTable["bmp"]
-//		= loadLambdaTable["png"]
-//		= loadLambdaTable["jpg"]
-//		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
-//	{
-//		return LoadFromWICFile(path.c_str(), WIC_FLAGS_NONE, meta, img);
-//	};
-//
-//	loadLambdaTable["tga"]
-//		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
-//	{
-//		return LoadFromTGAFile(path.c_str(), meta, img);
-//	};
-//
-//	loadLambdaTable["dds"]
-//		= [](const std::wstring& path, TexMetadata* meta, ScratchImage& img)->HRESULT
-//	{
-//		return LoadFromDDSFile(path.c_str(),DDS_FLAGS_NONE, meta, img);
-//	};
-//
 //	// 深度バッファ作成
 //	// 深度バッファの仕様
 //	D3D12_RESOURCE_DESC depthResDesc = {};
