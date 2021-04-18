@@ -64,10 +64,11 @@ private:
 		DirectX::XMFLOAT3 ambient;	// アンビエント色
 		MaterialForHlsl()
 		{
-			alpha = 0.0f;
-			specular = {};
-			specularity = 0.0f;
-			ambient = {};
+			diffuse		= {};
+			alpha		= 0.0f;
+			specular	= {};
+			specularity	= 0.0f;
+			ambient		= {};
 		}
 	};
 	// それ以外のマテリアルデータ

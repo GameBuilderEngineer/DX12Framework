@@ -548,6 +548,7 @@ HRESULT Application::InitializeCommand()
 	if (FAILED(result)) {
 		assert(0);
 	}
+	return result;
 }
 
 // レンダーターゲットの作成
@@ -965,6 +966,7 @@ HRESULT Application::CreateDepthStencilView()
 	dsvDesc.Flags			= D3D12_DSV_FLAG_NONE;				// フラグは特になし
 	_dev->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
+	return result;
 }
 
 // PMDファイルのロード
@@ -1169,7 +1171,7 @@ HRESULT Application::LoadPMDFile(const char* path)
 	}
 	
 	fclose(fp);
-
+	return result;
 }
 
 // GPU側のマテリアルデータの作成
