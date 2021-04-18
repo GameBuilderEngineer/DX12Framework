@@ -17,10 +17,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 }
 
 
-
-
-//HRESULT InitializeDXGIDevice() {
-//}
 //
 //HRESULT InitializeCommand() {
 //	// コマンドアロケータの作成
