@@ -129,18 +129,18 @@ private:
 	CD3DX12_VIEWPORT	_viewport;		// ビューポート
 	CD3DX12_RECT		_scissorrect;	// シザー矩形
 
-#ifdef _DEBUG
 	// デバッグ用エラー出力ラムダ
 	std::function<void(ID3DBlob* errorBlob)> errorDebug = [](ID3DBlob* errorBlob)
 	{
+#ifdef _DEBUG
 		if (errorBlob == nullptr)return;
 		std::string errstr;
 		errstr.resize(errorBlob->GetBufferSize());
 		std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
 		errstr += "\n";
 		OutputDebugStringA(errstr.c_str());
-	};
 #endif
+	};
 
 	// テクスチャバッファ周り
 	Microsoft::WRL::ComPtr<ID3D12Resource> CreateWhiteTexture();						// 白テクスチャの生成
