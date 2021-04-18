@@ -1172,6 +1172,60 @@ HRESULT Application::LoadPMDFile(const char* path)
 
 }
 
+// GPU側のマテリアルデータの作成
+HRESULT Application::CreateMaterialData() {
+	// マテリアルバッファを作成
+	auto materialBuffSize = sizeof(MaterialForHlsl);
+	materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
+
+	auto materialHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	auto materialResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(materialBuffSize * _materialNum);// もったいない
+	auto result = _dev->CreateCommittedResource(
+		&materialHeapProperties,
+		D3D12_HEAP_FLAG_NONE,
+		&materialResourceDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(_materialBuffer.ReleaseAndGetAddressOf())
+	);
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	// マップマテリアルにコピー
+	char* mapMaterial = nullptr;
+	result = _materialBuffer->Map(0, nullptr, (void**)&mapMaterial);
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+	for (auto& m : _materials) {
+		*((MaterialForHlsl*)mapMaterial) = m.material; // データコピー
+		mapMaterial += materialBuffSize; // 次のアラインメント位置まで進める
+	}
+	_materialBuffer->Unmap(0, nullptr);
+
+	// マテリアル用ディスクリプタヒープとビューの作成
+	D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
+	matDescHeapDesc.NumDescriptors	= _materialNum * 5;	// マテリアル数(定数1つ,テクスチャ3つ)を指定
+	matDescHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	matDescHeapDesc.NodeMask		= 0;
+	matDescHeapDesc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;// デスクリプタヒープ種別
+	result = _dev->CreateDescriptorHeap(
+		&matDescHeapDesc, 
+		IID_PPV_ARGS(_materialDescHeap.ReleaseAndGetAddressOf()));
+	if (FAILED(result)) {
+		assert(0);
+		return result;
+	}
+
+	// マテリアル用ビューの作成
+	matCBVDesc.BufferLocation	= _materialBuffer->GetGPUVirtualAddress();	// バッファ―アドレス
+	matCBVDesc.SizeInBytes		= (UINT)materialBuffSize;					// マテリアルの256アライメントサイズ
+	return result;
+}
+
 HRESULT Application::CreateSceneTransformView()
 {
 	return S_OK;

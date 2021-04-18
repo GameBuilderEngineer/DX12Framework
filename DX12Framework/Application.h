@@ -42,7 +42,7 @@ private:
 
 	// マテリアル周り
 	unsigned int _materialNum;
-	Microsoft::WRL::ComPtr<ID3D12Resource>				_materialBuffer = nullptr;
+	Microsoft::WRL::ComPtr<ID3D12Resource>	_materialBuffer = nullptr;
 	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
 
 	// デフォルトのテクスチャ（白、黒、グレイスケールグラデーション）

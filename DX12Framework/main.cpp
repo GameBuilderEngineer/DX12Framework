@@ -100,50 +100,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	//string strModelPath = "Model/MEIKO.pmd";
 //	//string strModelPath = "Model/亞北ネル.pmd";
 //	//string strModelPath = "Model/弱音ハク.pmd";
-
-//
-
 //
 //
-//
-//
-//	// マテリアルバッファを作成
-//	auto materialBuffSize = sizeof(MaterialForHlsl);
-//	materialBuffSize = (materialBuffSize + 0xff) & ~0xff;
-//	ComPtr<ID3D12Resource> materialBuff = nullptr;
-//	auto materialHeapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-//	auto materialResourceDesc = CD3DX12_RESOURCE_DESC::Buffer(materialBuffSize * materialNum);// もったいない
-//	result = _dev->CreateCommittedResource(
-//		&materialHeapProperties,
-//		D3D12_HEAP_FLAG_NONE,
-//		&materialResourceDesc,
-//		D3D12_RESOURCE_STATE_GENERIC_READ,
-//		nullptr,
-//		IID_PPV_ARGS(materialBuff.ReleaseAndGetAddressOf())
-//	);
-//
-//	// マップマテリアルにコピー
-//	char* mapMaterial = nullptr;
-//	result = materialBuff->Map(0, nullptr, (void**)&mapMaterial);
-//	for (auto& m : materials) {
-//		*((MaterialForHlsl*)mapMaterial) = m.material;	// データコピー
-//		mapMaterial += materialBuffSize;	// 次のアラインメント位置まで進める
-//	}
-//	materialBuff->Unmap(0, nullptr);
-//
-//	// マテリアル用ディスクリプタヒープとビューの作成
-//	ComPtr<ID3D12DescriptorHeap> materialDescHeap = nullptr;
-//	D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
-//	matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-//	matDescHeapDesc.NodeMask = 0;
-//	matDescHeapDesc.NumDescriptors = materialNum * 5;	// マテリアル数x4(定数,テクスチャ3つ)を指定
-//	matDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-//	result = _dev->CreateDescriptorHeap(&matDescHeapDesc, IID_PPV_ARGS(materialDescHeap.ReleaseAndGetAddressOf()));
-//
-//	// マテリアル用ビューの作成
-//	D3D12_CONSTANT_BUFFER_VIEW_DESC matCBVDesc = {};
-//	matCBVDesc.BufferLocation	= materialBuff->GetGPUVirtualAddress();	// バッファ―アドレス
-//	matCBVDesc.SizeInBytes		= (UINT)materialBuffSize;						// マテリアルの256アライメントサイズ
 //	
 //	// 通常テクスチャビュー作成
 //	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
