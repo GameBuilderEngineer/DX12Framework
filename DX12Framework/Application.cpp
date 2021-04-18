@@ -549,6 +549,7 @@ HRESULT Application::InitializeCommand()
 	}
 }
 
+// レンダーターゲットの作成
 HRESULT Application::CreateFinalRenderTarget(ComPtr<ID3D12DescriptorHeap>& rtvHeaps, vector<ID3D12Resource*>& backBuffers)
 {
 	// デスクリプタヒープの作成
@@ -584,6 +585,17 @@ HRESULT Application::CreateFinalRenderTarget(ComPtr<ID3D12DescriptorHeap>& rtvHe
 		_dev->CreateRenderTargetView(backBuffers[i], &rtvDesc, handle);
 		handle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	}
+	_viewport = CD3DX12_VIEWPORT(backBuffers[0]);
+	{/*
+		D3D12_VIEWPORT viewport = {};
+		viewport.Width		= window_width;		// 出力先の幅（ピクセル数）
+		viewport.Height		= window_height;	// 出力先の高さ（ピクセル数）
+		viewport.TopLeftX	= 0;				// 出力先の左上座標X
+		viewport.TopLeftY	= 0;				// 出力先の左上座標Y
+		viewport.MaxDepth	= 1.0f;				// 深度最大値
+		viewport.MinDepth	= 0.0f;				// 深度最小値
+	*/}
+
 }
 
 HRESULT Application::CreateBassicGraphicsPipeline()

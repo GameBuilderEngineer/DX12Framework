@@ -780,16 +780,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	ComPtr<ID3D12PipelineState> _pipelinestate = nullptr;
 //	result = _dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.ReleaseAndGetAddressOf()));
 //
-//	CD3DX12_VIEWPORT viewport(_backBuffers[0].Get());
-//	{/*
-//		D3D12_VIEWPORT viewport = {};
-//		viewport.Width		= window_width;		// 出力先の幅（ピクセル数）
-//		viewport.Height		= window_height;	// 出力先の高さ（ピクセル数）
-//		viewport.TopLeftX	= 0;				// 出力先の左上座標X
-//		viewport.TopLeftY	= 0;				// 出力先の左上座標Y
-//		viewport.MaxDepth	= 1.0f;				// 深度最大値
-//		viewport.MinDepth	= 0.0f;				// 深度最小値
-//	*/}
 //
 //
 //	CD3DX12_RECT scissorrect(0, 0, window_width, window_height);
