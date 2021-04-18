@@ -780,17 +780,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	ComPtr<ID3D12PipelineState> _pipelinestate = nullptr;
 //	result = _dev->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(_pipelinestate.ReleaseAndGetAddressOf()));
 //
-//
-//
-//	CD3DX12_RECT scissorrect(0, 0, window_width, window_height);
-//	{/*
-//		D3D12_RECT scissorrect = {};
-//		scissorrect.top		= 0;								// 切り抜き上座標
-//		scissorrect.left	= 0;								// 切り抜き左座標
-//		scissorrect.right	= scissorrect.left + window_width;	// 切り抜き右座標
-//		scissorrect.bottom	= scissorrect.top + window_height;	// 切り抜き下座標
-//	*/}
-//
 //	//シェーダ側に渡すための基本的な行列データ
 //	struct SceneData {
 //		XMMATRIX world;	// ワールド行列
