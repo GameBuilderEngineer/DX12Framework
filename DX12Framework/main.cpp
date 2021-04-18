@@ -45,15 +45,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //
 //#ifdef _DEBUG
 //int main() {
-//	auto errorDebug = [](ID3DBlob* errorBlob)
-//	{
-//		if (errorBlob == nullptr)return;
-//		std::string errstr;
-//		errstr.resize(errorBlob->GetBufferSize());
-//		std::copy_n((char*)errorBlob->GetBufferPointer(), errorBlob->GetBufferSize(), errstr.begin());
-//		errstr += "\n";
-//		OutputDebugStringA(errstr.c_str());
-//	};
 //
 //#else
 //#include<Windows.h>
