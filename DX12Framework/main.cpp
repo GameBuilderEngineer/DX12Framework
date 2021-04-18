@@ -1,9 +1,9 @@
 ﻿#include "Application.h"
-#include <Windows.h>
 
 #ifdef _DEBUG
 int main() {
 #else
+#include <Windows.h>
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 #endif
 	auto& app = Application::Instance();
