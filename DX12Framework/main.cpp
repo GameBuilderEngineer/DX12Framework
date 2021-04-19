@@ -52,16 +52,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //#include<Windows.h>
 //int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //#endif
-//	DebugOutputFormatString("Show window test.");
 //
-//	HWND hwnd;
-//	WNDCLASSEX windowClass = {};
-//	CreateGameWindow(hwnd, windowClass);
-//
-//#ifdef _DEBUG
-//	// デバッグレイヤーをオンに
-//	EnableDebugLayer();
-//#endif
 //
 //	HRESULT result = InitializeDXGIDevice();
 //

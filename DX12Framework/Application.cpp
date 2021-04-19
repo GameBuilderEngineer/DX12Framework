@@ -869,6 +869,7 @@ HRESULT Application::CreateRootSignature()
 	return result;
 }
 
+// ループ起動
 void Application::Run()
 {
 	// ウィンドウ表示
@@ -1381,6 +1382,12 @@ void Application::CreateMaterialAndTextureView()
 bool Application::Init() {
 	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
 	CreateGameWindow(_hwnd,_windowClass);
+	DebugOutputFormatString("Show window test.");
+#ifdef _DEBUG
+	// デバッグレイヤーをオンに
+	EnableDebugLayer();
+#endif
+
 	return true;
 }
 
