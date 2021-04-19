@@ -21,7 +21,7 @@ private:
 	WNDCLASSEX _windowClass = {};
 	HWND _hwnd;
 	// DXGIまわり
-	Microsoft::WRL::ComPtr<IDXGIFactory4>				_dxgiFactory	= nullptr;	// DXGIインターフェイス
+	Microsoft::WRL::ComPtr<IDXGIFactory6>				_dxgiFactory	= nullptr;	// DXGIインターフェイス
 	Microsoft::WRL::ComPtr<IDXGISwapChain4>				_swapchain		= nullptr;	// スワップチェイン
 
 	// DirectX12まわり

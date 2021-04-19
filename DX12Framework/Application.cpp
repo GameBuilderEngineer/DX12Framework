@@ -1388,6 +1388,24 @@ bool Application::Init() {
 	EnableDebugLayer();
 #endif
 
+	// DirectX12関連初期化
+	if (FAILED(InitializeDXGIDevice())) {
+		assert(0);
+		return false;
+	}
+	if (FAILED(InitializeCommand())) {
+		assert(0);
+		return false;
+	}
+	if (FAILED(CreateSwapChain(_hwnd,_dxgiFactory))) {
+		assert(0);
+		return false;
+	}
+	if (FAILED(CreateFinalRenderTarget(_rtvHeaps,_backBuffers))) {
+		assert(0);
+		return false;
+	}
+
 	return true;
 }
 
