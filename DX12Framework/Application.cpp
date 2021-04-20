@@ -1406,6 +1406,69 @@ bool Application::Init() {
 		return false;
 	}
 
+	// テクスチャローダー関連初期化
+	CreateTextureLoaderTable();
+
+	// 深度バッファ作成
+	if (FAILED(CreateDepthStencilView())) {
+		assert(0);
+		return false;
+	}
+
+	// フェンスの作成
+	if (FAILED(_dev->CreateFence(_fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(_fence.ReleaseAndGetAddressOf())))){
+		assert(0);
+		return false;
+	}
+
+	_whiteTex	= CreateWhiteTexture();
+	_blackTex	= CreateBlackTexture();
+	_gradTex	= CreateGrayGradationTexture();
+
+	//string strModelPath = "Model/hibiki/hibiki.pmd";
+	//string strModelPath = "Model/satori/satori.pmd";
+	//string strModelPath = "Model/reimu/reimu.pmd";
+	//string strModelPath = "Model/巡音ルカ.pmd";
+	string strModelPath = "Model/初音ミク.pmd";
+	//string strModelPath = "Model/初音ミクVer2.pmd";
+	//string strModelPath = "Model/初音ミクmetal.pmd";
+	//string strModelPath = "Model/咲音メイコ.pmd";
+	//string strModelPath = "Model/ダミーボーン.pmd";//NG
+	//string strModelPath = "Model/鏡音リン.pmd";
+	//string strModelPath = "Model/鏡音リン_act2.pmd";
+	//string strModelPath = "Model/カイト.pmd";
+	//string strModelPath = "Model/MEIKO.pmd";
+	//string strModelPath = "Model/亞北ネル.pmd";
+	//string strModelPath = "Model/弱音ハク.pmd";
+	if (FAILED(LoadPMDFile(strModelPath.c_str()))) {
+		return false;
+	}
+
+	// ロードしたデータをもとにバッファにマテリアルデータを作る
+	if (FAILED(CreateMaterialData())) {
+		return false;
+	}
+
+	// マテリアルまわりのビュー作成及びテクスチャビュー作成
+	// 同じデスクリプタヒープ内に作っていくためマテリアルと
+	// 強い結合状態になっている。
+	CreateMaterialAndTextureView();
+
+	// ルートシグネチャ作成
+	if (FAILED(CreateRootSignature())) {
+		return false;
+	}
+
+	// パイプライン設定（シェーダもここで設定）
+	if (FAILED(CreateBasicGraphicsPipeline())) {
+		return false;
+	}
+
+	// 座標変換用ビューの生成
+	if (FAILED(CreateSceneTransformView())) {
+		return false;
+	}
+
 	return true;
 }
 

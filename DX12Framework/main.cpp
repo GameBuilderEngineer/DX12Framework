@@ -45,56 +45,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	*/}
 //}
 //
-//#ifdef _DEBUG
-//int main() {
-//
-//#else
-//#include<Windows.h>
-//int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-//#endif
-//
-//
-//	HRESULT result = InitializeDXGIDevice();
-//
-//	result = InitializeCommand();
-//
-//	result = CreateSwapChain(hwnd, _dxgiFactory);
-//
-//	std::vector<ComPtr<ID3D12Resource>> _backBuffers;
-//	ComPtr<ID3D12DescriptorHeap> rtvHeaps = nullptr;
-//
-//	result = CreateFinalRenderTarget(rtvHeaps, _backBuffers);
-//
-//	// フェンスの作成
-//	ComPtr<ID3D12Fence> _fence = nullptr;
-//	UINT64 _fenceVal = 0;
-//	result = _dev->CreateFence(_fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(_fence.ReleaseAndGetAddressOf()));
-//
-//
-//	auto whiteTex	= CreateWhiteTexture();
-//	auto blackTex	= CreateBlackTexture();
-//	auto gradTex	= CreateGrayGradationTexture();
-//
-
-//	//string strModelPath = "Model/hibiki/hibiki.pmd";
-//	//string strModelPath = "Model/satori/satori.pmd";
-//	//string strModelPath = "Model/reimu/reimu.pmd";
-//	//string strModelPath = "Model/巡音ルカ.pmd";
-//	string strModelPath = "Model/初音ミク.pmd";
-//	//string strModelPath = "Model/初音ミクVer2.pmd";
-//	//string strModelPath = "Model/初音ミクmetal.pmd";
-//	//string strModelPath = "Model/咲音メイコ.pmd";
-//	//string strModelPath = "Model/ダミーボーン.pmd";//NG
-//	//string strModelPath = "Model/鏡音リン.pmd";
-//	//string strModelPath = "Model/鏡音リン_act2.pmd";
-//	//string strModelPath = "Model/カイト.pmd";
-//	//string strModelPath = "Model/MEIKO.pmd";
-//	//string strModelPath = "Model/亞北ネル.pmd";
-//	//string strModelPath = "Model/弱音ハク.pmd";
-//
-
-//	
-//
 
 //
 //	MSG msg				= {};
