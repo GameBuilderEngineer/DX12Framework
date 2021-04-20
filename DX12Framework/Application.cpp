@@ -1472,8 +1472,9 @@ bool Application::Init() {
 	return true;
 }
 
+// 後処理
 void Application::Terminate() {
-
+	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
 }
 
 Application::Application() {
