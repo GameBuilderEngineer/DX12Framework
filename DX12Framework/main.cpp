@@ -22,15 +22,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //// D3Dデバイスが保持しているオブジェクト情報を出力
 //void ReportD3DObject()
 //{
-//	if (_dev == nullptr)
-//		return;
-//	ID3D12DebugDevice* debugDevice = nullptr;
-//	auto result = _dev->QueryInterface(&debugDevice);
-//	if (SUCCEEDED(result))
-//	{
-//		debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
-//		debugDevice->Release();
-//	}
 //}
 //
 //void releaseResource()
@@ -45,116 +36,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 //	*/}
 //}
 //
-
-//
-//	MSG msg				= {};
-//	unsigned int frame	= 0;
-//	float angle			= 0.0f;
-//	float delta			= 0.005f;
-//	float sumDelta		= 0.0f;
-//	while (true)
-//	{
-//		worldMat			= XMMatrixRotationY(angle);
-//		viewMat				= XMMatrixLookAtLH(
-//			XMLoadFloat3(&eye),
-//			XMLoadFloat3(&target),
-//			XMLoadFloat3(&up)
-//		);;
-//		mapMatrix->world	= worldMat;
-//		mapMatrix->view		= viewMat;
-//		mapMatrix->proj		= projMat;
-//		mapMatrix->eye		= eye;
-//
-//		//angle		+= delta*10.0f;
-//		//sumDelta	+= delta;
-//		//eye.x		+= delta*20.0f;
-//		//target.x	+= delta*20.0f;
-//		//if (fabsf(sumDelta) >= 1.0f)
-//		//{
-//		//	delta *= -1.0f;
-//		//}
-//
-//
-//		// DirectX処理
-//		// バックバッファのインデックスを取得
-//		auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
-//
-//		D3D12_RESOURCE_BARRIER BarrierDesc = {};
-//		BarrierDesc.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-//		BarrierDesc.Flags					= D3D12_RESOURCE_BARRIER_FLAG_NONE;
-//		BarrierDesc.Transition.pResource	= _backBuffers[bbIdx].Get();
-//		BarrierDesc.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-//		BarrierDesc.Transition.StateBefore	= D3D12_RESOURCE_STATE_PRESENT;
-//		BarrierDesc.Transition.StateAfter	= D3D12_RESOURCE_STATE_RENDER_TARGET;
-//
-//		_cmdList->SetPipelineState(_pipelinestate.Get());
-//
-//		// レンダーターゲットを指定
-//		auto rtvH = rtvHeaps->GetCPUDescriptorHandleForHeapStart();
-//		rtvH.ptr += static_cast<unsigned long long>(bbIdx) * _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-//		auto dsvH = dsvHeap->GetCPUDescriptorHandleForHeapStart();
-//
-//		_cmdList->ResourceBarrier(1, &BarrierDesc);
-//		_cmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
-//
-//		// 画面クリア
-//		float clearColor[] = { 1.0f,1.0f,1.0f,1.0f };//白色
-//		_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
-//		_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-//
-//		_cmdList->RSSetViewports(1, &viewport);
-//		_cmdList->RSSetScissorRects(1, &scissorrect);
-//
-//		_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-//		_cmdList->IASetVertexBuffers(0, 1, &vbView);
-//		_cmdList->IASetIndexBuffer(&ibView);
-//
-//		_cmdList->SetGraphicsRootSignature(rootsignature.Get());
-//
-//		// WVP変換行列
-//		_cmdList->SetDescriptorHeaps(1, basicDescHeap.GetAddressOf());
-//		_cmdList->SetGraphicsRootDescriptorTable(0, basicDescHeap->GetGPUDescriptorHandleForHeapStart());
-//
-//		// マテリアル
-//		_cmdList->SetDescriptorHeaps(1, materialDescHeap.GetAddressOf());
-//
-//		auto materialH = materialDescHeap->GetGPUDescriptorHandleForHeapStart();	// ヒープ先頭
-//		unsigned int idxOffset = 0;
-//
-//		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 5;
-//		for (auto& m : materials) {
-//			_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
-//			_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
-//			// ヒープポインタとインデックスを次に進める
-//			materialH.ptr += cbvsrvIncSize;
-//			idxOffset += m.indicesNum;
-//		}
-//
-//		BarrierDesc.Transition.StateBefore	= D3D12_RESOURCE_STATE_RENDER_TARGET;
-//		BarrierDesc.Transition.StateAfter	= D3D12_RESOURCE_STATE_PRESENT;
-//
-//		_cmdList->ResourceBarrier(1, &BarrierDesc);
-//
-//		//命令のクローズ
-//		_cmdList->Close();
-//
-//		// コマンドリストの実行
-//		ID3D12CommandList* cmdlists[] = { _cmdList.Get() };
-//		_cmdQueue->ExecuteCommandLists(1, cmdlists);
-//		// 待ち
-//		_cmdQueue->Signal(_fence.Get(), ++_fenceVal);
-//
-//		while (_fence->GetCompletedValue() != _fenceVal) {
-//			;
-//		}
-//
-//		// フリップ
-//		_swapchain->Present(1, 0);
-//		_cmdAllocator->Reset();							//キューをクリア
-//		_cmdList->Reset(_cmdAllocator.Get(), nullptr);	//再びコマンドリストをためる準備
-//
-//	}
-//	UnregisterClass(windowClass.lpszClassName, windowClass.hInstance);
 //
 //#ifdef _DEBUG
 //	ReportD3DObject();

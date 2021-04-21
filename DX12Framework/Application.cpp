@@ -880,8 +880,30 @@ void Application::Run()
 	float angle			= 0.0f;
 	float delta			= 0.005f;
 	float sumDelta		= 0.0f;
+	auto dsvH = _dsvHeap->GetCPUDescriptorHandleForHeapStart();
+
 	while (true)
 	{
+		_worldMat			= XMMatrixRotationY(angle);
+		//_viewMat				= XMMatrixLookAtLH(
+		//	XMLoadFloat3(&eye),
+		//	XMLoadFloat3(&target),
+		//	XMLoadFloat3(&up)
+		//);
+		_mapScene->world	= _worldMat;
+		_mapScene->view		= _viewMat;
+		_mapScene->proj		= _projMat;
+		//_mapScene->eye		= _eye;
+
+		//angle		+= delta*10.0f;
+		//sumDelta	+= delta;
+		//eye.x		+= delta*20.0f;
+		//target.x	+= delta*20.0f;
+		//if (fabsf(sumDelta) >= 1.0f)
+		//{
+		//	delta *= -1.0f;
+		//}
+
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -890,6 +912,97 @@ void Application::Run()
 			break;
 		}
 
+		// DirectX処理
+		// バックバッファのインデックスを取得
+		auto bbIdx = _swapchain->GetCurrentBackBufferIndex();
+
+		auto renderTargetBarrierDesc = CD3DX12_RESOURCE_BARRIER::Transition(_backBuffers[bbIdx],
+			D3D12_RESOURCE_STATE_PRESENT,
+			D3D12_RESOURCE_STATE_RENDER_TARGET);
+		_cmdList->ResourceBarrier(1, &renderTargetBarrierDesc);
+		{/*
+			D3D12_RESOURCE_BARRIER BarrierDesc = {};
+			BarrierDesc.Type					= D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			BarrierDesc.Flags					= D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			BarrierDesc.Transition.pResource	= _backBuffers[bbIdx];
+			BarrierDesc.Transition.Subresource	= D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			BarrierDesc.Transition.StateBefore	= D3D12_RESOURCE_STATE_PRESENT;
+			BarrierDesc.Transition.StateAfter	= D3D12_RESOURCE_STATE_RENDER_TARGET;
+			_cmdList->ResourceBarrier(1, &BarrierDesc);
+		*/}
+
+		_cmdList->SetPipelineState(_pipelinestate.Get());
+
+		// レンダーターゲットを指定
+		auto rtvH = _rtvHeaps->GetCPUDescriptorHandleForHeapStart();
+		rtvH.ptr += static_cast<unsigned long long>(bbIdx) * _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		
+
+		_cmdList->OMSetRenderTargets(1, &rtvH, false, &dsvH);
+		_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		// 画面クリア
+		float clearColor[] = { 1.0f,1.0f,1.0f,1.0f };//白色
+		_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
+
+		_cmdList->RSSetViewports(1, &_viewport);
+		_cmdList->RSSetScissorRects(1, &_scissorrect);
+
+		_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_cmdList->IASetVertexBuffers(0, 1, &_vbView);
+		_cmdList->IASetIndexBuffer(&_ibView);
+
+		_cmdList->SetGraphicsRootSignature(_rootsignature.Get());
+
+		// WVP変換行列
+		ID3D12DescriptorHeap* bdh[] = { _basicDescHeap.Get() };
+		_cmdList->SetDescriptorHeaps(1, bdh);
+		_cmdList->SetGraphicsRootDescriptorTable(0, _basicDescHeap->GetGPUDescriptorHandleForHeapStart());
+
+		ID3D12DescriptorHeap* mdh[] = { _materialDescHeap.Get() };
+		// マテリアル
+		_cmdList->SetDescriptorHeaps(1, mdh);
+
+		auto materialH = _materialDescHeap->GetGPUDescriptorHandleForHeapStart();	// ヒープ先頭
+		unsigned int idxOffset = 0;
+
+		auto cbvsrvIncSize = _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)* 5;
+		for (auto& m : _materials) {
+			_cmdList->SetGraphicsRootDescriptorTable(1, materialH);
+			_cmdList->DrawIndexedInstanced(m.indicesNum, 1, idxOffset, 0, 0);
+			// ヒープポインタとインデックスを次に進める
+			materialH.ptr += cbvsrvIncSize;
+			idxOffset += m.indicesNum;
+		}
+		auto presentBarrierDesc = CD3DX12_RESOURCE_BARRIER::Transition(_backBuffers[bbIdx],
+			D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+		_cmdList->ResourceBarrier(1, &presentBarrierDesc);
+		{/*
+			BarrierDesc.Transition.StateBefore	= D3D12_RESOURCE_STATE_RENDER_TARGET;
+			BarrierDesc.Transition.StateAfter	= D3D12_RESOURCE_STATE_PRESENT;
+			_cmdList->ResourceBarrier(1, &BarrierDesc);
+		*/}
+
+		//命令のクローズ
+		_cmdList->Close();
+
+		// コマンドリストの実行
+		ID3D12CommandList* cmdlists[] = { _cmdList.Get() };
+		_cmdQueue->ExecuteCommandLists(1, cmdlists);
+		// 待ち
+		_cmdQueue->Signal(_fence.Get(), ++_fenceVal);
+
+		if(_fence->GetCompletedValue() != _fenceVal) {
+			auto event = CreateEvent(nullptr,false,false,nullptr);
+			_fence->SetEventOnCompletion(_fenceVal, event);
+			WaitForSingleObject(event, INFINITE);
+			CloseHandle(event);
+		}
+		_cmdAllocator->Reset();// キューをクリア
+		_cmdList->Reset(_cmdAllocator.Get(), _pipelinestate.Get());// 再びコマンドリストをためる準備
+
+		// フリップ
+		_swapchain->Present(1, 0);
 	}
 
 }
@@ -956,14 +1069,13 @@ HRESULT Application::CreateDepthStencilView()
 	CD3DX12_CLEAR_VALUE rtClearValue(DXGI_FORMAT_R8G8B8A8_UINT, clrColor);
 
 	// 深度バッファリソースの作成
-	ComPtr<ID3D12Resource> depthBuffer = nullptr;
 	auto result = _dev->CreateCommittedResource(
 		&depthHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&depthResDesc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,	// デプス書き込みに使用
 		&depthClearValue,
-		IID_PPV_ARGS(depthBuffer.ReleaseAndGetAddressOf())
+		IID_PPV_ARGS(_depthBuffer.ReleaseAndGetAddressOf())
 	);
 	if (FAILED(result)) {
 		return result;
@@ -973,8 +1085,8 @@ HRESULT Application::CreateDepthStencilView()
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};		// 深度に使用
 	dsvHeapDesc.NumDescriptors = 1;						// 深度ビュー１つのみ
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	//デプスステンシルビューとして利用
-	ComPtr<ID3D12DescriptorHeap> dsvHeap = nullptr;
-	result = _dev->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(dsvHeap.ReleaseAndGetAddressOf()));
+
+	result = _dev->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(_dsvHeap.ReleaseAndGetAddressOf()));
 	if (FAILED(result)) {
 		return result;
 	}
@@ -984,7 +1096,7 @@ HRESULT Application::CreateDepthStencilView()
 	dsvDesc.Format			= DXGI_FORMAT_D32_FLOAT;			// デプス値に32bit使用
 	dsvDesc.ViewDimension	= D3D12_DSV_DIMENSION_TEXTURE2D;	// 2Dテクスチャ
 	dsvDesc.Flags			= D3D12_DSV_FLAG_NONE;				// フラグは特になし
-	_dev->CreateDepthStencilView(depthBuffer.Get(), &dsvDesc, dsvHeap->GetCPUDescriptorHandleForHeapStart());
+	_dev->CreateDepthStencilView(_depthBuffer.Get(), &dsvDesc, _dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
 	return result;
 }
@@ -1379,6 +1491,20 @@ void Application::CreateMaterialAndTextureView()
 	}
 }
 
+// D3Dデバイスが保持しているオブジェクト情報を出力
+void Application::ReportD3DObject()
+{
+	if (_dev == nullptr)
+		return;
+	ID3D12DebugDevice* debugDevice = nullptr;
+	auto result = _dev->QueryInterface(&debugDevice);
+	if (SUCCEEDED(result))
+	{
+		debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
+		debugDevice->Release();
+	}
+}
+
 bool Application::Init() {
 	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
 	CreateGameWindow(_hwnd,_windowClass);
@@ -1475,6 +1601,16 @@ bool Application::Init() {
 // 後処理
 void Application::Terminate() {
 	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
+#ifdef _DEBUG
+	//ReportD3DObject();
+#endif
+	for (auto buf : _backBuffers)
+	{
+		safeRelease(buf);
+	}
+#ifdef _DEBUG
+	//ReportD3DObject();
+#endif
 }
 
 Application::Application() {

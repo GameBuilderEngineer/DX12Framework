@@ -126,7 +126,7 @@ private:
 
 	std::vector<ID3D12Resource*> _backBuffers;	// バックバッファ
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _rtvHeaps = nullptr;	// レンダーターゲット用デスクリプタヒープ
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeaps = nullptr;	// 深度バッファビュー用デスクリプタヒープ
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> _dsvHeap = nullptr;	// 深度バッファビュー用デスクリプタヒープ
 	CD3DX12_VIEWPORT	_viewport;		// ビューポート
 	CD3DX12_RECT		_scissorrect;	// シザー矩形
 
@@ -186,6 +186,9 @@ private:
 
 	// マテリアル＆テクスチャのビューを作成
 	void CreateMaterialAndTextureView();
+
+	// D3Dデバイスが保持しているオブジェクト情報を出力
+	void ReportD3DObject();
 
 	// シングルトンのためにコンストラクタをprivateに
 	// さらにコピーと代入を禁止する
