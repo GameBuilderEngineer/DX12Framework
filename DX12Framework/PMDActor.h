@@ -23,6 +23,9 @@ private:
 	D3D12_VERTEX_BUFFER_VIEW _vbView = {};
 	D3D12_INDEX_BUFFER_VIEW _ibView = {};
 
+	ComPtr<ID3D12Resource> _transformMat		= nullptr;	// 座標変換行列（今はワールドのみ）
+	ComPtr<ID3D12DescriptorHeap> _transformHeap = nullptr;	// 座標変換ヒープ
+
 	// シェーダ―側に投げられるマテリアルデータ
 	struct MaterialForHlsl {
 		DirectX::XMFLOAT3 diffuse;	// ディフューズ色
