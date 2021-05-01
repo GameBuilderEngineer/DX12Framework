@@ -464,7 +464,7 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	// 定数バッファ作成
 	auto heapPropTypeUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	auto matirxCBufferDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff);
-	auto result = _dev->CreateCommittedResource(
+	result = _dev->CreateCommittedResource(
 		&heapPropTypeUpload,
 		D3D12_HEAP_FLAG_NONE,
 		&matirxCBufferDesc,

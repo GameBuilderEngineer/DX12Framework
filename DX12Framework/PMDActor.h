@@ -1,9 +1,11 @@
 ﻿#pragma once
+#define _CRT_SECURE_NO_WARNINGS
 
 #include<d3d12.h>
 #include<DirectXMath.h>
 #include<vector>
 #include<wrl.h>
+#include<string>
 
 class Dx12Wrapper;
 class PMDRenderer;
