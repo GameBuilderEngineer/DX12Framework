@@ -42,7 +42,7 @@ void PMDRenderer::Draw() {
 
 // テクスチャリソースの作成
 ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t width, size_t height) {
-	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
+	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, (UINT)height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
 	ID3D12Resource* buff = nullptr;
 	auto result = _dx12.Device()->CreateCommittedResource(

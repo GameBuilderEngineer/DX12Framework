@@ -322,7 +322,7 @@ HRESULT PMDActor::CreateTransformView() {
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	cbvDesc.BufferLocation = _transformBuff->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = buffSize;
+	cbvDesc.SizeInBytes = (UINT)buffSize;
 	_dx12.Device()->CreateConstantBufferView(&cbvDesc, _transformHeap->GetCPUDescriptorHandleForHeapStart());
 
 	return S_OK;
@@ -369,7 +369,7 @@ HRESULT PMDActor::CreateMaterialData() {
 HRESULT PMDActor::CreateMaterialAndTextureView() {
 	// マテリアル用ディスクリプタヒープとビューの作成
 	D3D12_DESCRIPTOR_HEAP_DESC matDescHeapDesc = {};
-	matDescHeapDesc.NumDescriptors = _materials.size() * 5;	// マテリアル数(定数1つ,テクスチャ3つ)を指定
+	matDescHeapDesc.NumDescriptors = (UINT)(_materials.size() * 5);	// マテリアル数(定数1つ,テクスチャ3つ)を指定
 	matDescHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	matDescHeapDesc.NodeMask = 0;
 	matDescHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;// デスクリプタヒープ種別
@@ -453,6 +453,8 @@ HRESULT PMDActor::CreateMaterialAndTextureView() {
 		}
 		matDescHeapH.Offset(incSize);
 	}
+
+	return result;
 }
 
 // 更新
