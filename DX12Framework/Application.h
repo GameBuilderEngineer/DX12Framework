@@ -40,7 +40,7 @@ private:
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);
 
 	// D3Dデバイスが保持しているオブジェクト情報を出力
-	//void ReportD3DObject();
+	void ReportD3DObject();
 
 	// シングルトンのためにコンストラクタをprivateに
 	// さらにコピーと代入を禁止する
@@ -55,7 +55,7 @@ public:
 	// 初期化
 	bool Init();
 
-	// ループ起動
+	// ループ処理
 	void Run();
 
 	// 後処理
