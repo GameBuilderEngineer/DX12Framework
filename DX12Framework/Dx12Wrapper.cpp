@@ -481,8 +481,8 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	_mappedSceneData = nullptr;// マップ先を示すポインタ
 	result = _sceneConstBuff->Map(0, nullptr, (void**)&_mappedSceneData);//マップ
 
-	XMFLOAT3 eye(0, 17, -5);
-	XMFLOAT3 target(0, 17, 0);
+	XMFLOAT3 eye(0, 15, -15);
+	XMFLOAT3 target(0, 15, 0);
 	XMFLOAT3 up(0, 1, 0);
 	//auto worldMat = XMMatrixIdentity();
 	auto viewMat = XMMatrixLookAtLH(
@@ -494,7 +494,7 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	auto projMat = XMMatrixPerspectiveFovLH(
 		XM_PIDIV4,	//画角は45°
 		static_cast<float>(desc.Width) / static_cast<float>(desc.Height),	//アス比
-		1.0f,
+		0.1f,
 		1000.0f
 	);
 

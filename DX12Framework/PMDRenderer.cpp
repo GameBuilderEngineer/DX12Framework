@@ -10,7 +10,7 @@ using namespace std;
 
 namespace {
 	void PrintErrorBlob(ID3DBlob* blob) {
-		assert(blob);
+		if (blob == nullptr)return;
 		string err;
 		err.resize(blob->GetBufferSize());
 		copy_n((char*)blob->GetBufferPointer(), err.size(), err.begin());

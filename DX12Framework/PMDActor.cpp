@@ -470,7 +470,7 @@ void PMDActor::Draw() {
 
 	ID3D12DescriptorHeap* transheaps[] = { _transformHeap.Get() };
 	_dx12.CommandList()->SetDescriptorHeaps(1, transheaps);
-	_dx12.CommandList()->SetGraphicsRootDescriptorTable(0, _transformHeap->GetGPUDescriptorHandleForHeapStart());
+	_dx12.CommandList()->SetGraphicsRootDescriptorTable(1, _transformHeap->GetGPUDescriptorHandleForHeapStart());
 
 
 	ID3D12DescriptorHeap* mdh[] = { _materialDescHeap.Get() };
