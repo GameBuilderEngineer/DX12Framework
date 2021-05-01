@@ -463,7 +463,7 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 
 	// 定数バッファ作成
 	auto heapPropTypeUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	auto matirxCBufferDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(XMMATRIX) + 0xff) & ~0xff);
+	auto matirxCBufferDesc = CD3DX12_RESOURCE_DESC::Buffer((sizeof(SceneData) + 0xff) & ~0xff);
 	auto result = _dev->CreateCommittedResource(
 		&heapPropTypeUpload,
 		D3D12_HEAP_FLAG_NONE,
@@ -492,17 +492,17 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	);
 	// 定数バッファ作成
 	auto projMat = XMMatrixPerspectiveFovLH(
-		XM_PIDIV2,	//画角は90°
+		XM_PIDIV4,	//画角は45°
 		static_cast<float>(desc.Width) / static_cast<float>(desc.Height),	//アス比
 		1.0f,
-		100.0f
+		1000.0f
 	);
 
 	// 行列の内容をコピー
 	//_mappedSceneData->world = worldMat;
-	_mappedSceneData->view = viewMat;
-	_mappedSceneData->proj = projMat;
-	_mappedSceneData->eye = eye;
+	_mappedSceneData->view	= viewMat;
+	_mappedSceneData->proj	= projMat;
+	_mappedSceneData->eye	= eye;
 
 	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc = {};
 	descHeapDesc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;	// シェーダ―から見える
