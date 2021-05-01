@@ -25,16 +25,17 @@ private:
 	ComPtr<ID3D12Resource> _gradTex		= nullptr;
 
 	// テクスチャバッファ周り
-	ID3D12Resource* CreateDefaultTexture(size_t width,size_t height);
-	ID3D12Resource* CreateWhiteTexture();						// 白テクスチャの生成
-	ID3D12Resource* CreateBlackTexture();						// 黒テクスチャの生成
-	ID3D12Resource* CreateGrayGradationTexture();				// グレーテクスチャの生成
+	ID3D12Resource* CreateDefaultTexture(size_t width,size_t height);	// テクスチャリソースの作成
+	ID3D12Resource* CreateWhiteTexture();								// 白テクスチャの生成
+	ID3D12Resource* CreateBlackTexture();								// 黒テクスチャの生成
+	ID3D12Resource* CreateGrayGradationTexture();						// グレーテクスチャの生成
 
 	// パイプライン初期化
 	HRESULT CreateGraphicsPipelineForPMD();
 	// ルートシグネチャ初期化
 	HRESULT CreateRootSignature();
 
+	// シェーダ―コンパイル結果の確認
 	bool CheckShaderCompileResult(HRESULT result, ID3DBlob* error = nullptr);
 
 public:
