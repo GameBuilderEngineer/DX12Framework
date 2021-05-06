@@ -337,7 +337,7 @@ ComPtr<ID3D12Resource> Dx12Wrapper::CreateTextureFromFile(const char* texpath) {
 	{
 		return nullptr;
 	}
-
+	_textureTable[texpath] = texbuff;
 	return texbuff;
 }
 
