@@ -26,10 +26,10 @@ private:
 
 private:
 	// テクスチャバッファ周り
-	ID3D12Resource* CreateDefaultTexture(size_t width,size_t height);	// テクスチャリソースの作成
-	ID3D12Resource* CreateWhiteTexture();								// 白テクスチャの生成
-	ID3D12Resource* CreateBlackTexture();								// 黒テクスチャの生成
-	ID3D12Resource* CreateGrayGradationTexture();						// グレーテクスチャの生成
+	ComPtr<ID3D12Resource> CreateDefaultTexture(size_t width,size_t height);	// テクスチャリソースの作成
+	ComPtr<ID3D12Resource> CreateWhiteTexture();								// 白テクスチャの生成
+	ComPtr<ID3D12Resource> CreateBlackTexture();								// 黒テクスチャの生成
+	ComPtr<ID3D12Resource> CreateGrayGradationTexture();						// グレーテクスチャの生成
 
 	// パイプライン初期化
 	HRESULT CreateGraphicsPipelineForPMD();

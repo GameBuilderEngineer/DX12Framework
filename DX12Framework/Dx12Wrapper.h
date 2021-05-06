@@ -77,7 +77,7 @@ private:
 	// テクスチャローダテーブルの作成
 	void CreateTextureLoaderTable();
 	// テクスチャ名からテクスチャバッファ作成、中身をコピー
-	ID3D12Resource* CreateTextureFromFile(const char* texpath);
+	ComPtr<ID3D12Resource> CreateTextureFromFile(const char* texpath);
 
 public:
 	// D3Dデバイスが保持しているオブジェクト情報を出力

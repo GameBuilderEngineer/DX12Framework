@@ -7,6 +7,7 @@
 #include<algorithm>
 
 using namespace std;
+using Microsoft::WRL::ComPtr;
 
 namespace {
 	void PrintErrorBlob(ID3DBlob* blob) {
@@ -44,31 +45,31 @@ void PMDRenderer::Draw() {
 }
 
 // テクスチャリソースの作成
-ID3D12Resource* PMDRenderer::CreateDefaultTexture(size_t width, size_t height) {
+ComPtr<ID3D12Resource> PMDRenderer::CreateDefaultTexture(size_t width, size_t height) {
 	auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, (UINT)height);
 	auto texHeapProp = CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0);
-	ID3D12Resource* buff = nullptr;
+	ComPtr<ID3D12Resource> buff = nullptr;
 	auto result = _dx12.Device()->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE,// 特に指定なし
 		&resDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
-		IID_PPV_ARGS(&buff)
+		IID_PPV_ARGS(buff.GetAddressOf())
 	);
-
+	DxDebug buff->SetName(L"DefaultTexture::buff");
 	if (FAILED(result)) {
 		assert(SUCCEEDED(result));
 		return nullptr;
 	}
-
+	DxDebug _dx12.ReportD3DObject();
 	return buff;
 }
 
 // 白テクスチャの作成
-ID3D12Resource* PMDRenderer::CreateWhiteTexture()
+ComPtr<ID3D12Resource> PMDRenderer::CreateWhiteTexture()
 {
-	ID3D12Resource* whiteBuff = CreateDefaultTexture(4, 4);
+	ComPtr<ID3D12Resource> whiteBuff = CreateDefaultTexture(4, 4);
 
 	std::vector<unsigned char> data(4 * 4 * 4);
 	std::fill(data.begin(), data.end(), 0xff);	// 全部255で埋める
@@ -86,9 +87,9 @@ ID3D12Resource* PMDRenderer::CreateWhiteTexture()
 }
 
 // 黒テクスチャの作成
-ID3D12Resource* PMDRenderer::CreateBlackTexture()
+ComPtr<ID3D12Resource> PMDRenderer::CreateBlackTexture()
 {
-	ID3D12Resource* blackBuff = CreateDefaultTexture(4,4);
+	ComPtr<ID3D12Resource> blackBuff = CreateDefaultTexture(4,4);
 
 	std::vector<unsigned char> data(4 * 4 * 4);
 	std::fill(data.begin(), data.end(), 0x00);	// 全部0で埋める
@@ -106,9 +107,9 @@ ID3D12Resource* PMDRenderer::CreateBlackTexture()
 }
 
 // デフォルトグラデーションテクスチャ
-ID3D12Resource* PMDRenderer::CreateGrayGradationTexture()
+ComPtr<ID3D12Resource> PMDRenderer::CreateGrayGradationTexture()
 {
-	ID3D12Resource* gradBuff = CreateDefaultTexture(4, 256);
+	ComPtr<ID3D12Resource> gradBuff = CreateDefaultTexture(4, 256);
 
 	// 上が白くて下が黒いテクスチャデータを作成
 	std::vector<unsigned int> data(4 * 256);

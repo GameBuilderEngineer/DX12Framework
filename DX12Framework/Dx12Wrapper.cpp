@@ -222,7 +222,7 @@ ComPtr<ID3D12Resource> Dx12Wrapper::GetTextureByPath(const char* texpath) {
 		return _textureTable[texpath];
 	}
 	else {
-		return ComPtr<ID3D12Resource>(CreateTextureFromFile(texpath));
+		return CreateTextureFromFile(texpath);
 	}
 }
 
@@ -253,7 +253,7 @@ void Dx12Wrapper::CreateTextureLoaderTable()
 }
 
 // テクスチャの読み込み
-ID3D12Resource* Dx12Wrapper::CreateTextureFromFile(const char* texpath) {
+ComPtr<ID3D12Resource> Dx12Wrapper::CreateTextureFromFile(const char* texpath) {
 	string texPath = texpath;
 
 	// WICテクスチャのロード
@@ -307,14 +307,14 @@ ID3D12Resource* Dx12Wrapper::CreateTextureFromFile(const char* texpath) {
 	*/}
 
 	// バッファー作成
-	ID3D12Resource* texbuff = nullptr;
+	ComPtr<ID3D12Resource> texbuff = nullptr;
 	result = _dev->CreateCommittedResource(
 		&texHeapProp,
 		D3D12_HEAP_FLAG_NONE,	// 特に指定なし
 		&resDesc,
 		D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
 		nullptr,
-		IID_PPV_ARGS(&texbuff)
+		IID_PPV_ARGS(texbuff.ReleaseAndGetAddressOf())
 	);
 	DxDebug texbuff->SetName(L"texbuff");
 	if (FAILED(result))	{
