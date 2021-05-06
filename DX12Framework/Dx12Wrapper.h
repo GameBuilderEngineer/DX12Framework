@@ -104,8 +104,8 @@ public:
 };
 
 #ifdef  _DEBUG
-#define DXDebug
+#define DxDebug
 #else
-#define DXDebug 1 ? (void) 0 :
+#define DxDebug 1 ? (void) 0 : (void)
 #endif //  _DEBUG
 

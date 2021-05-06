@@ -144,9 +144,7 @@ bool Application::Init() {
 // 後処理
 void Application::Terminate() {
 	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
-#ifdef _DEBUG
-	_dx12->ReportD3DObject();
-#endif
+	DxDebug _dx12->ReportD3DObject();
 }
 
 Application& Application::Instance() {
@@ -155,8 +153,8 @@ Application& Application::Instance() {
 }
 
 Application::Application()
-	: _windowClass{}
-	, _hwnd (nullptr)
+	: _windowClass	{}
+	, _hwnd			(nullptr)
 	, _dx12			(nullptr)
 	, _pmdRenderer	(nullptr)
 	, _pmdActor		(nullptr)

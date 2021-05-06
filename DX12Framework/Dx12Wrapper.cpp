@@ -97,10 +97,8 @@ namespace {
 }
 
 Dx12Wrapper::Dx12Wrapper(HWND hwnd) {
-#ifdef _DEBUG
 	// デバッグレイヤーをオンに
-	EnableDebugLayer();
-#endif
+	DxDebug EnableDebugLayer();
 
 	auto& app = Application::Instance();
 	_winSize = app.GetWindowSize();
@@ -525,9 +523,10 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 // D3Dデバイスが保持しているオブジェクト情報を出力
 void Dx12Wrapper::ReportD3DObject()
 {
-	DXDebug DebugOutputFormatString("-----------------------ReportD3DObject-----------------------\n");
+#ifdef  _DEBUG
 	if (_dev == nullptr)
 		return;
+	DxDebug DebugOutputFormatString("-----------------------ReportD3DObject-----------------------\n");
 	ID3D12DebugDevice* debugDevice = nullptr;
 	auto result = _dev->QueryInterface(&debugDevice);
 	if (SUCCEEDED(result))
@@ -539,7 +538,8 @@ void Dx12Wrapper::ReportD3DObject()
 		);
 		debugDevice->Release();
 	}
-	DXDebug DebugOutputFormatString("-------------------------------------------------------------\n");
+	DxDebug DebugOutputFormatString("-------------------------------------------------------------\n");
+#endif //  _DEBUG
 }
 
 // レンダーターゲットの作成
