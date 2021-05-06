@@ -15,6 +15,7 @@ void DebugOutputFormatString(const char* format, ...) {
 	va_list valist;
 	va_start(valist, format);
 	vprintf(format, valist);
+	_RPTN(_CRT_WARN, format, valist);
 	va_end(valist);
 #endif
 }
