@@ -97,6 +97,8 @@ namespace {
 }
 
 Dx12Wrapper::Dx12Wrapper(HWND hwnd) {
+	auto assertResult = [](HRESULT hr) {if (FAILED(hr))assert(0); };
+
 	// デバッグレイヤーをオンに
 	DxDebug EnableDebugLayer();
 
@@ -104,41 +106,39 @@ Dx12Wrapper::Dx12Wrapper(HWND hwnd) {
 	_winSize = app.GetWindowSize();
 
 	// DirectX12関連初期化
-	if (FAILED(InitializeDXGIDevice())) {
-		assert(0);
-		return;
-	}
-	if (FAILED(InitializeCommand())) {
-		assert(0);
-		return;
-	}
-	if (FAILED(CreateSwapChain(hwnd))) {
-		assert(0);
-		return;
-	}
-	if (FAILED(CreateFinalRenderTargets())) {
-		assert(0);
-		return;
-	}
-	if (FAILED(CreateSceneView())) {
-		assert(0);
-		return;
-	}
+	auto result = InitializeDXGIDevice();
+	assertResult(result);
+
+	// コマンド関連初期化
+	result = InitializeCommand();
+	assertResult(result);
+
+	// スワップチェインの生成
+	result = CreateSwapChain(hwnd);
+	assertResult(result);
+
+	// レンダーターゲットの生成
+	result = CreateFinalRenderTargets();
+	assertResult(result);
+
+	// シーンビューの生成
+	result = CreateSceneView();
+	assertResult(result);
 
 	// テクスチャローダー関連初期化
 	CreateTextureLoaderTable();
 
 	// 深度バッファ作成
-	if (FAILED(CreateDepthStencilView())) {
-		assert(0);
-		return;
-	}
+	result = CreateDepthStencilView();
+	assertResult(result);
 
 	// フェンスの作成
-	if (FAILED(_dev->CreateFence(_fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(_fence.ReleaseAndGetAddressOf())))) {
-		assert(0);
-		return;
-	}
+	result = _dev->CreateFence(
+		_fenceVal,
+		D3D12_FENCE_FLAG_NONE,
+		IID_PPV_ARGS(_fence.ReleaseAndGetAddressOf())
+	);
+	assertResult(result);
 
 }
 
@@ -453,7 +453,6 @@ HRESULT Dx12Wrapper::InitializeCommand()
 	cmdQueueDesc.Type		= D3D12_COMMAND_LIST_TYPE_DIRECT;			// ここはコマンドリストと合わせる
 	result = _dev->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(_cmdQueue.ReleaseAndGetAddressOf()));	// コマンドキュー
 
-	assert(SUCCEEDED(result));
 	return result;
 }
 
@@ -700,9 +699,9 @@ void Dx12Wrapper::EndDraw()
 		_fence->SetEventOnCompletion(_fenceVal, event);
 		if (event)
 		{
-		WaitForSingleObject(event, INFINITE);
-		CloseHandle(event);
-	}
+			WaitForSingleObject(event, INFINITE);
+			CloseHandle(event);
+		}
 	}
 
 	_cmdAllocator->Reset();							// キューをクリア
