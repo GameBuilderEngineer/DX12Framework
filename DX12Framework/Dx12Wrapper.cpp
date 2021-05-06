@@ -90,10 +90,9 @@ namespace {
 
 	// デバッグレイヤーを有効にする
 	void EnableDebugLayer() {
-		ID3D12Debug* debugLayer = nullptr;
-		D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
+		ComPtr<ID3D12Debug> debugLayer = nullptr;
+		D3D12GetDebugInterface(IID_PPV_ARGS(debugLayer.ReleaseAndGetAddressOf()));
 		debugLayer->EnableDebugLayer();
-		debugLayer->Release();
 	}
 }
 
