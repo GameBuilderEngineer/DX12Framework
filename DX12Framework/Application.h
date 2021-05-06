@@ -20,6 +20,9 @@ void safeRelease(T* p)
 		p->Release();
 	p = nullptr;
 }
+
+void DebugOutputFormatString(const char* format, ...);
+
 class Dx12Wrapper;
 class PMDRenderer;
 class PMDActor;
