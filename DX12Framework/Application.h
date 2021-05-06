@@ -41,9 +41,6 @@ private:
 	// ゲーム用ウィンドウの生成
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);
 
-	// D3Dデバイスが保持しているオブジェクト情報を出力
-	void ReportD3DObject();
-
 	// シングルトンのためにコンストラクタをprivateに
 	// さらにコピーと代入を禁止する
 	Application();

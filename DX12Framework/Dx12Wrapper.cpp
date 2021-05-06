@@ -523,6 +523,26 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	return result;
 }
 
+// D3Dデバイスが保持しているオブジェクト情報を出力
+void Dx12Wrapper::ReportD3DObject()
+{
+	DXDebug DebugOutputFormatString("-----------------------ReportD3DObject-----------------------\n");
+	if (_dev == nullptr)
+		return;
+	ID3D12DebugDevice* debugDevice = nullptr;
+	auto result = _dev->QueryInterface(&debugDevice);
+	if (SUCCEEDED(result))
+	{
+		debugDevice->ReportLiveDeviceObjects(
+			D3D12_RLDO_DETAIL
+			| D3D12_RLDO_IGNORE_INTERNAL 
+			//| D3D12_RLDO_SUMMARY
+		);
+		debugDevice->Release();
+	}
+	DXDebug DebugOutputFormatString("-------------------------------------------------------------\n");
+}
+
 // レンダーターゲットの作成
 HRESULT Dx12Wrapper::CreateFinalRenderTargets() {
 	DXGI_SWAP_CHAIN_DESC1 desc = {};

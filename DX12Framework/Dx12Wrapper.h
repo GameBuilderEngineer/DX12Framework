@@ -78,6 +78,9 @@ class Dx12Wrapper
 	ID3D12Resource* CreateTextureFromFile(const char* texpath);
 
 public:
+	// D3Dデバイスが保持しているオブジェクト情報を出力
+	void ReportD3DObject();
+
 	Dx12Wrapper(HWND hwnd);
 	~Dx12Wrapper();
 

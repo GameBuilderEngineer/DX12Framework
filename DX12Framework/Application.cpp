@@ -118,20 +118,6 @@ void Application::Run()
 	}
 }
 
-// D3Dデバイスが保持しているオブジェクト情報を出力
-void Application::ReportD3DObject()
-{
-	if (_dx12->Device() == nullptr)
-		return;
-	ID3D12DebugDevice* debugDevice = nullptr;
-	auto result = _dx12->Device()->QueryInterface(&debugDevice);
-	if (SUCCEEDED(result))
-	{
-		debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
-		debugDevice->Release();
-	}
-}
-
 bool Application::Init() {
 	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
 	CreateGameWindow(_hwnd,_windowClass);
@@ -171,7 +157,7 @@ bool Application::Init() {
 void Application::Terminate() {
 	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
 #ifdef _DEBUG
-	//ReportD3DObject();
+	_dx12->ReportD3DObject();
 #endif
 }
 
