@@ -85,6 +85,6 @@ float4 BasicPS(Output input) : SV_TARGET
 		+ saturate(
 			spa.Sample(smp, sphereMapUV) * texColor	// スフィアマップ(加算)
 			+ float4(specularB * specular.rgb, 1))	// スペキュラー
-		+ float4(texColor * ambient * 0.5, 1);		// アンビエント(明るくなりすぎるので0.5)
+		+ float4(texColor * ambient * 0.1, 1);		// アンビエント(明るくなりすぎるので0.5)
 	
 }
