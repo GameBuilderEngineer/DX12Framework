@@ -213,6 +213,10 @@ HRESULT Dx12Wrapper::CreateDepthStencilView() {
 
 Dx12Wrapper::~Dx12Wrapper() 
 {
+	for (auto p : _backBuffers)
+	{
+		safeRelease(p);
+	}
 }
 
 ComPtr<ID3D12Resource> Dx12Wrapper::GetTextureByPath(const char* texpath) {
