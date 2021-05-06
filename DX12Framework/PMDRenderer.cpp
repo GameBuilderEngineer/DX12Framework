@@ -22,8 +22,12 @@ namespace {
 
 PMDRenderer::PMDRenderer(Dx12Wrapper& dx12) :_dx12(dx12)
 {
-	assert(SUCCEEDED(CreateRootSignature()));
-	assert(SUCCEEDED(CreateGraphicsPipelineForPMD()));
+	if (FAILED(CreateRootSignature())) {
+		assert(0);
+	}
+	if (FAILED(CreateGraphicsPipelineForPMD())) {
+		assert(0);
+	}
 	_whiteTex = CreateWhiteTexture();
 	DxDebug _whiteTex->SetName(L"_whiteTex");
 	_blackTex = CreateBlackTexture();
