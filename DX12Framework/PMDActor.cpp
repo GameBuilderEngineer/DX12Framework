@@ -138,6 +138,7 @@ HRESULT PMDActor::LoadPMDFile(const char* path)
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(_vb.ReleaseAndGetAddressOf()));
+	DxDebug _vb->SetName(L"_vb");
 
 	// 作ったバッファに頂点データをコピー
 	unsigned char* vertMap = nullptr;
@@ -164,7 +165,7 @@ HRESULT PMDActor::LoadPMDFile(const char* path)
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(_ib.ReleaseAndGetAddressOf()));
-
+	DxDebug _ib->SetName(L"_ib");
 	// 作ったバッファにインデックスデータをコピー
 	unsigned short* mappedIdx = nullptr;
 	_ib->Map(0, nullptr, (void**)&mappedIdx);
@@ -473,8 +474,8 @@ void PMDActor::Draw() {
 	_dx12.CommandList()->SetGraphicsRootDescriptorTable(1, _transformHeap->GetGPUDescriptorHandleForHeapStart());
 
 
-	ID3D12DescriptorHeap* mdh[] = { _materialDescHeap.Get() };
 	// マテリアル
+	ID3D12DescriptorHeap* mdh[] = { _materialDescHeap.Get() };
 	_dx12.CommandList()->SetDescriptorHeaps(1, mdh);
 
 	auto materialH = _materialDescHeap->GetGPUDescriptorHandleForHeapStart();	// ヒープ先頭

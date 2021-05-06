@@ -24,8 +24,11 @@ PMDRenderer::PMDRenderer(Dx12Wrapper& dx12) :_dx12(dx12)
 	assert(SUCCEEDED(CreateRootSignature()));
 	assert(SUCCEEDED(CreateGraphicsPipelineForPMD()));
 	_whiteTex = CreateWhiteTexture();
+	DxDebug _whiteTex->SetName(L"_whiteTex");
 	_blackTex = CreateBlackTexture();
+	DxDebug _blackTex->SetName(L"_blackTex");
 	_gradTex = CreateGrayGradationTexture();
+	DxDebug _gradTex->SetName(L"_gradTex");
 }
 
 PMDRenderer::~PMDRenderer() {

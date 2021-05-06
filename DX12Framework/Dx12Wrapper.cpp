@@ -316,7 +316,7 @@ ID3D12Resource* Dx12Wrapper::CreateTextureFromFile(const char* texpath) {
 		nullptr,
 		IID_PPV_ARGS(&texbuff)
 	);
-
+	DxDebug texbuff->SetName(L"texbuff");
 	if (FAILED(result))	{
 		return nullptr;
 	}
@@ -579,6 +579,7 @@ HRESULT Dx12Wrapper::CreateFinalRenderTargets() {
 		rtvDesc.Format = _backBuffers[i]->GetDesc().Format;
 		_dev->CreateRenderTargetView(_backBuffers[i], &rtvDesc, handle);
 		handle.ptr += _dev->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		DxDebug _backBuffers[i]->SetName(L"backBuffer");
 	}
 
 	_viewport.reset(new CD3DX12_VIEWPORT(_backBuffers[0]));
