@@ -695,11 +695,14 @@ void Dx12Wrapper::EndDraw()
 
 	// 待ち
 	_cmdQueue->Signal(_fence.Get(), ++_fenceVal);
-	if (_fence->GetCompletedValue() != _fenceVal) {
+	if (_fence->GetCompletedValue() < _fenceVal) {
 		auto event = CreateEvent(nullptr, false, false, nullptr);
 		_fence->SetEventOnCompletion(_fenceVal, event);
+		if (event)
+		{
 		WaitForSingleObject(event, INFINITE);
 		CloseHandle(event);
+	}
 	}
 
 	_cmdAllocator->Reset();							// キューをクリア
