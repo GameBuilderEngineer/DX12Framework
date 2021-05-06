@@ -157,6 +157,9 @@ Application& Application::Instance() {
 Application::Application()
 	: _windowClass{}
 	, _hwnd (nullptr)
+	, _dx12			(nullptr)
+	, _pmdRenderer	(nullptr)
+	, _pmdActor		(nullptr)
 {
 
 }
