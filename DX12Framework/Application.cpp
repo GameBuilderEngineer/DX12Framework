@@ -115,8 +115,7 @@ bool Application::Init() {
 	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
 	CreateGameWindow(_hwnd,_windowClass);
 
-	DebugOutputFormatString("Show window test.");
-
+	DebugOutputFormatString("Show window test.\n");
 
 	std::string strModelPath = "Model/初音ミク.pmd";
 	//string strModelPath = "Model/hibiki/hibiki.pmd";
