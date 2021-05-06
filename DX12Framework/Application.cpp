@@ -19,13 +19,6 @@ void DebugOutputFormatString(const char* format, ...) {
 	va_end(valist);
 #endif
 }
-// デバッグレイヤーを有効にする
-void EnableDebugLayer() {
-	ID3D12Debug* debugLayer = nullptr;
-	D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
-	debugLayer->EnableDebugLayer();
-	debugLayer->Release();
-}
 
 // ウィンドウ定数
 const unsigned int window_width = 1280;
@@ -124,10 +117,6 @@ bool Application::Init() {
 
 	DebugOutputFormatString("Show window test.");
 
-#ifdef _DEBUG
-	// デバッグレイヤーをオンに
-	EnableDebugLayer();
-#endif
 
 	std::string strModelPath = "Model/初音ミク.pmd";
 	//string strModelPath = "Model/hibiki/hibiki.pmd";
