@@ -98,3 +98,9 @@ public:
 
 };
 
+#ifdef  _DEBUG
+#define DXDebug
+#else
+#define DXDebug 1 ? (void) 0 :
+#endif //  _DEBUG
+
