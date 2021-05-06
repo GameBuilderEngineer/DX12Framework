@@ -24,6 +24,7 @@ private:
 	ComPtr<ID3D12Resource> _blackTex	= nullptr;
 	ComPtr<ID3D12Resource> _gradTex		= nullptr;
 
+private:
 	// テクスチャバッファ周り
 	ID3D12Resource* CreateDefaultTexture(size_t width,size_t height);	// テクスチャリソースの作成
 	ID3D12Resource* CreateWhiteTexture();								// 白テクスチャの生成

@@ -38,6 +38,7 @@ private:
 	std::shared_ptr<PMDRenderer>	_pmdRenderer;
 	std::shared_ptr<PMDActor>		_pmdActor;
 
+private:
 	// ゲーム用ウィンドウの生成
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);
 

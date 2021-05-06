@@ -11,6 +11,7 @@
 
 class Dx12Wrapper
 {
+private:
 	SIZE _winSize;
 	template<typename T>
 	using ComPtr = Microsoft::WRL::ComPtr<T>;
@@ -50,6 +51,7 @@ class Dx12Wrapper
 	ComPtr<ID3D12Fence> _fence = nullptr;
 	UINT64 _fenceVal = 0;
 
+private:
 	// 最終的なレンダーターゲットの生成
 	HRESULT CreateFinalRenderTargets();
 	// デプスステンシルビューの生成
