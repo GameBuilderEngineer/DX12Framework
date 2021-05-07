@@ -27,12 +27,15 @@ void DebugOutputFormatString(const char* format, ...) {
 const unsigned int window_width = 1280;
 const unsigned int window_height = 720;
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 // ウィンドウプロシージャ
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	if (msg == WM_DESTROY) {	// ウィンドウ破棄時呼び出し
 		PostQuitMessage(0);		// OSに対して終了メッセージ
 		return 0;
 	}
+	ImGui_ImplWin32_WndProcHandler(hwnd, msg, wparam, lparam);
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
