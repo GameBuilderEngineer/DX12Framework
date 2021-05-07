@@ -51,6 +51,15 @@ private:
 	ComPtr<ID3D12Fence> _fence = nullptr;
 	UINT64 _fenceVal = 0;
 
+	// ロード用テーブル
+	using LoadLambda_t = std::function<HRESULT(const std::wstring& path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
+	std::map < std::string, LoadLambda_t> _loadLambdaTable;
+
+	// テクスチャテーブル
+	std::unordered_map<std::string, ComPtr<ID3D12Resource>> _textureTable;
+
+	// imgui用ヒープ
+	ComPtr<ID3D12DescriptorHeap> _heapForImgui;
 private:
 	// 最終的なレンダーターゲットの生成
 	HRESULT CreateFinalRenderTargets();
@@ -69,15 +78,13 @@ private:
 	// ビュープロジェクション用ビューの生成
 	HRESULT CreateSceneView();
 
-	// ロード用テーブル
-	using LoadLambda_t = std::function<HRESULT(const std::wstring& path, DirectX::TexMetadata*, DirectX::ScratchImage&)>;
-	std::map < std::string, LoadLambda_t> _loadLambdaTable;
-	// テクスチャテーブル
-	std::unordered_map<std::string, ComPtr<ID3D12Resource>> _textureTable;
 	// テクスチャローダテーブルの作成
 	void CreateTextureLoaderTable();
 	// テクスチャ名からテクスチャバッファ作成、中身をコピー
 	ComPtr<ID3D12Resource> CreateTextureFromFile(const char* texpath);
+
+	// imgui用ヒープの生成
+	ComPtr<ID3D12DescriptorHeap> CreateDescriptorHeapForImgui();
 
 public:
 	// D3Dデバイスが保持しているオブジェクト情報を出力
@@ -86,6 +93,7 @@ public:
 	Dx12Wrapper(HWND hwnd);
 	~Dx12Wrapper();
 
+	bool Initialize();
 	void Update();
 	void BeginDraw();
 	void EndDraw();
@@ -95,9 +103,10 @@ public:
 	ComPtr<ID3D12Resource> GetTextureByPath(const char* texpath);
 
 	
-	ComPtr<ID3D12Device> Device();// デバイス
-	ComPtr<ID3D12GraphicsCommandList> CommandList();// コマンドリスト
-	ComPtr<IDXGISwapChain4> Swapchain();// スワップチェイン
+	ComPtr<ID3D12Device> Device();						// デバイス
+	ComPtr<ID3D12GraphicsCommandList> CommandList();	// コマンドリスト
+	ComPtr<IDXGISwapChain4> Swapchain();				// スワップチェイン
+	ComPtr<ID3D12DescriptorHeap> GetHeapForImgui();		// imgui用ヒープ
 
 	void SetScene();
 

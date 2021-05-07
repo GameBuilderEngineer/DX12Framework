@@ -609,13 +609,16 @@ HRESULT Dx12Wrapper::CreateFinalRenderTargets() {
 	return result;
 }
 
+bool Dx12Wrapper::Initialize()
+{
+	// imgui用のヒープの作成
+	_heapForImgui = CreateDescriptorHeapForImgui();
+	if (_heapForImgui == nullptr)
+	{
+		return false;
+	}
 
-ComPtr<ID3D12Device> Dx12Wrapper::Device() {
-	return _dev;
-}
-
-ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList() {
-	return _cmdList;
+	return true;
 }
 
 void Dx12Wrapper::Update()
@@ -708,6 +711,35 @@ void Dx12Wrapper::EndDraw()
 	_cmdList->Reset(_cmdAllocator.Get(), nullptr);	// 再びコマンドリストをためる準備
 }
 
+
+// imgui用ヒープの生成
+ComPtr<ID3D12DescriptorHeap> Dx12Wrapper::CreateDescriptorHeapForImgui()
+{
+	ComPtr<ID3D12DescriptorHeap> ret;
+
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	desc.NodeMask		= 0;
+	desc.NumDescriptors	= 1;
+	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+	_dev->CreateDescriptorHeap(&desc, IID_PPV_ARGS(ret.ReleaseAndGetAddressOf()));
+
+	return ret;
+}
+
+
+
+
+ComPtr<ID3D12Device> Dx12Wrapper::Device() {
+	return _dev;
+}
+ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList() {
+	return _cmdList;
+}
 ComPtr<IDXGISwapChain4> Dx12Wrapper::Swapchain() {
 	return _swapchain;
+}
+ComPtr<ID3D12DescriptorHeap> Dx12Wrapper::GetHeapForImgui() {
+	return _heapForImgui;
 }

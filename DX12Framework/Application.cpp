@@ -138,6 +138,10 @@ bool Application::Init() {
 
 	// DirectX12ラッパー生成＆初期化
 	_dx12.reset(new Dx12Wrapper(_hwnd));
+	if (!_dx12->Initialize())
+		return false;
+
+	// PMD用レンダラー&アクターの初期化
 	_pmdRenderer.reset(new PMDRenderer(*_dx12));
 	_pmdActor.reset(new PMDActor(strModelPath.c_str(), *_pmdRenderer));
 
