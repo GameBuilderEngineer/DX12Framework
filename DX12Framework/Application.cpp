@@ -180,6 +180,11 @@ bool Application::InitializeImgui()
 
 // 後処理
 void Application::Terminate() {
+	// Cleanup
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
 	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
 	DxDebug _dx12->ReportD3DObject();
 }
