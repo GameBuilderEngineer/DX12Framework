@@ -38,6 +38,7 @@ private:
 	std::shared_ptr<PMDRenderer>	_pmdRenderer;
 	std::shared_ptr<PMDActor>		_pmdActor;
 
+	const int NUM_FRAMES_IN_FLIGHT = 3;
 private:
 	// ゲーム用ウィンドウの生成
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);
@@ -47,6 +48,9 @@ private:
 	Application();
 	Application(const Application&) = delete;
 	void operator = (const Application&) = delete;
+
+	// imguiの初期化
+	bool InitializeImgui();
 
 public:
 	// Applicaitonのシングルインスタンスを得る

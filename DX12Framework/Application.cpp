@@ -141,9 +141,39 @@ bool Application::Init() {
 	if (!_dx12->Initialize())
 		return false;
 
+	// imguiの初期化
+	if (!InitializeImgui())
+		return false;
+
 	// PMD用レンダラー&アクターの初期化
 	_pmdRenderer.reset(new PMDRenderer(*_dx12));
 	_pmdActor.reset(new PMDActor(strModelPath.c_str(), *_pmdRenderer));
+
+	return true;
+}
+
+// imguiの初期化
+bool Application::InitializeImgui()
+{
+	if (ImGui::CreateContext() == nullptr)
+	{
+		assert(0);
+		return false;
+	}
+
+	bool blnResult = ImGui_ImplWin32_Init(_hwnd);
+	if (!blnResult)
+	{
+		assert(0);
+		return false;
+	}
+
+	ImGui_ImplDX12_Init(_dx12->Device().Get(),	// DirectX12デバイス
+		NUM_FRAMES_IN_FLIGHT,					// 頂点バッファとインデックスバッファの複合構造体によりGPUの処理を待たずに次のコマンドリスト発行ができるようにしている（推定）
+		DXGI_FORMAT_R8G8B8A8_UNORM,				// 書き込み先RTVのフォーマット
+		_dx12->GetHeapForImgui().Get(),			// imgui用デスクリプタヒープ
+		_dx12->GetHeapForImgui()->GetCPUDescriptorHandleForHeapStart(),		// CPUハンドル
+		_dx12->GetHeapForImgui()->GetGPUDescriptorHandleForHeapStart());	// GPUハンドル
 
 	return true;
 }
