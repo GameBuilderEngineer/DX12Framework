@@ -12,6 +12,7 @@
 #include<dxgidebug.h>
 #include<wrl.h>
 #include<memory>
+#include "imgui/imgui.h"
 
 template <class T>
 void safeRelease(T* p)
@@ -39,6 +40,9 @@ private:
 	std::shared_ptr<PMDActor>		_pmdActor;
 
 	const int NUM_FRAMES_IN_FLIGHT = 3;
+	bool _show_demo_window;
+	bool _show_another_window;
+	ImVec4 _clear_color;
 private:
 	// ゲーム用ウィンドウの生成
 	void CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass);

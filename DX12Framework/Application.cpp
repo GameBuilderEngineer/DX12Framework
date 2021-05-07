@@ -24,8 +24,8 @@ void DebugOutputFormatString(const char* format, ...) {
 }
 
 // ウィンドウ定数
-const unsigned int window_width = 1280;
-const unsigned int window_height = 720;
+const unsigned int window_width = 1920;
+const unsigned int window_height = 1080;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -110,8 +110,64 @@ void Application::Run()
 		_pmdActor->Update();
 		_pmdActor->Draw();
 
-		_dx12->EndDraw();
+		// imgui 描画前処理
+		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
+		// Demo window
+		if (_show_demo_window)
+			ImGui::ShowDemoWindow(&_show_demo_window);
+
+		// Simple Basic
+		{
+			ImGui::Begin("Rendering Test Menu");
+			ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
+			ImGui::End();
+		}
+
+		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+		{
+			static float f = 0.0f;
+			static int counter = 0;
+
+			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+			ImGui::Checkbox("Demo Window", &_show_demo_window);      // Edit bools storing our window open/close state
+			ImGui::Checkbox("Another Window", &_show_another_window);
+
+			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+			ImGui::ColorEdit3("clear color", (float*)&_clear_color); // Edit 3 floats representing a color
+
+			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+				counter++;
+			ImGui::SameLine();
+			ImGui::Text("counter = %d", counter);
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::End();
+		}
+
+		// Another Simple Window
+		if (_show_another_window)
+		{
+			ImGui::Begin("Another Window", &_show_another_window);
+			ImGui::Text("Helllo from another window!");
+			if (ImGui::Button("Close Me"))
+				_show_another_window = false;
+			ImGui::End();
+		}
+
+		// Rendering
+		ImGui::Render();
+
+		// コマンドリストへ描画情報をセット
+		_dx12->CommandList()->SetDescriptorHeaps(1, _dx12->GetHeapForImgui().GetAddressOf());	// imgui用デスクリプタをセット
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _dx12->CommandList().Get());		// コマンドリストへ描画情報をセット
+
+		_dx12->EndDraw();
+		
 		// フリップ
 		_dx12->Swapchain()->Present(1,0);
 	}
@@ -199,12 +255,14 @@ Application& Application::Instance() {
 
 Application::Application()
 	: _windowClass	{}
-	, _hwnd			(nullptr)
-	, _dx12			(nullptr)
-	, _pmdRenderer	(nullptr)
-	, _pmdActor		(nullptr)
+	, _hwnd					(nullptr)
+	, _dx12					(nullptr)
+	, _pmdRenderer			(nullptr)
+	, _pmdActor				(nullptr)
+	, _show_demo_window		(true)
+	, _show_another_window	(false)
 {
-
+	_clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 }
 
 Application::~Application() {
