@@ -99,7 +99,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(DXTEX_DIR);$(EFK_ROOT_DIR)/Effekseer;$(EFK_ROOT_DIR)/EffekseerRendererDX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXTEX_DIR);$(EFK_ROOT_DIR)/Effekseer;$(EFK_ROOT_DIR)/EffekseerRendererDX12;$(EFK_ROOT_DIR)/EffekseerSoundXAudio2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,7 +131,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(DXTEX_DIR);$(EFK_ROOT_DIR)/Effekseer;$(EFK_ROOT_DIR)/EffekseerRendererDX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(DXTEX_DIR);$(EFK_ROOT_DIR)/Effekseer;$(EFK_ROOT_DIR)/EffekseerRendererDX12;$(EFK_ROOT_DIR)/EffekseerSoundXAudio2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
