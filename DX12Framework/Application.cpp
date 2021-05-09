@@ -17,6 +17,32 @@
 #include<iostream>
 #endif
 
+//------------------------------------------------------------------------------
+// Effekseer
+//------------------------------------------------------------------------------
+// ---基本---
+// エフェクトレンダラー
+EffekseerRenderer::RendererRef _efkRenderer;
+// エフェクトマネージャー
+Effekseer::ManagerRef _efkManager;
+// ---DX12やVulkan,metalなどのコマンドリスト系への対応用---
+// メモリプール
+Effekseer::RefPtr<EffekseerRenderer::SingleFrameMemoryPool> _efkMemoryPool;
+// コマンドリスト(DX12/Vulkan対応用)
+Effekseer::RefPtr<EffekseerRenderer::CommandList> _efkCmdList;
+// ---エフェクト再生用---
+// エフェクト本体（エフェクトファイルに対応）
+Effekseer::EffectRef _effect;
+// エフェクトハンドル（再生中のエフェクトに対応）
+Effekseer::Handle _efkHandle;
+// エフェクト用サウンド
+::EffekseerSound::SoundRef _efkSound;
+
+// XAudio2の初期化
+static IXAudio2* g_xa2 = nullptr;
+static IXAudio2MasteringVoice* g_xa2_master = nullptr;
+IXAudio2* GetIXAudio2() { return g_xa2; }
+
 ///@brief コンソール画面にフォーマット付き文字列を表示
 ///@param format フォーマット
 ///@param 可変長引数
