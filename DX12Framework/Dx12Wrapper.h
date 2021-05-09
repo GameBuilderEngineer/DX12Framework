@@ -104,9 +104,12 @@ public:
 
 	
 	ComPtr<ID3D12Device> Device();						// デバイス
-	ComPtr<ID3D12GraphicsCommandList> CommandList();	// コマンドリスト
+	ComPtr<ID3D12GraphicsCommandList> CommandList();		// コマンドリスト
+	ComPtr<ID3D12CommandQueue> CommandQueue();			// コマンドリスト
 	ComPtr<IDXGISwapChain4> Swapchain();				// スワップチェイン
 	ComPtr<ID3D12DescriptorHeap> GetHeapForImgui();		// imgui用ヒープ
+	DirectX::XMMATRIX ViewMatrix();						// ビュー行列
+	DirectX::XMMATRIX ProjMatrix();						// プロジェクション行列
 
 	void SetScene();
 

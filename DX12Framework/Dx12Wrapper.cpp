@@ -737,9 +737,18 @@ ComPtr<ID3D12Device> Dx12Wrapper::Device() {
 ComPtr<ID3D12GraphicsCommandList> Dx12Wrapper::CommandList() {
 	return _cmdList;
 }
+ComPtr<ID3D12CommandQueue> Dx12Wrapper::CommandQueue() {
+	return _cmdQueue;
+}
 ComPtr<IDXGISwapChain4> Dx12Wrapper::Swapchain() {
 	return _swapchain;
 }
 ComPtr<ID3D12DescriptorHeap> Dx12Wrapper::GetHeapForImgui() {
 	return _heapForImgui;
 }
+DirectX::XMMATRIX Dx12Wrapper::ViewMatrix() {
+	return _mappedSceneData->view;
+};
+DirectX::XMMATRIX Dx12Wrapper::ProjMatrix() {
+	return _mappedSceneData->proj;
+};
