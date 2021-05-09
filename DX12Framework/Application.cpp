@@ -177,6 +177,23 @@ bool Application::InitializeEffekseer()
 	return true;
 }
 
+// Effekseerのカメラの同期
+void Application::SyncronizeEffekseerCamera()
+{
+	Effekseer::Matrix44 fkViewMat;
+	Effekseer::Matrix44 fkProjMat;
+	auto view = _dx12->ViewMatrix();
+	auto proj = _dx12->ProjMatrix();
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			fkViewMat.Values[i][j] = view.r[i].m128_f32[j];
+			fkProjMat.Values[i][j] = proj.r[i].m128_f32[j];
+		}
+	}
+	// 投影行列を設定
+	_efkRenderer->SetCameraMatrix(fkViewMat);
+	// カメラ行列を設定
+	_efkRenderer->SetProjectionMatrix(fkProjMat);
 }
 
 // ループ処理
