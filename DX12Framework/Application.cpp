@@ -108,6 +108,75 @@ SIZE Application::GetWindowSize()const {
 	ret.cx = window_width;
 	ret.cy = window_height;
 	return ret;
+// Effekseerの初期化
+bool Application::InitializeEffekseer()
+{
+	// エフェクトレンダラーの作成
+	DXGI_FORMAT bbFormats[] = { DXGI_FORMAT_R8G8B8A8_UNORM,DXGI_FORMAT_R8G8B8A8_UNORM };
+	_efkRenderer = ::EffekseerRendererDX12::Create(
+		_dx12->Device().Get(),			// デバイス
+		_dx12->CommandQueue().Get(),	// コマンドキュー
+		2,							// バックバッファの数
+		bbFormats,					// レンダーターゲットフォーマット
+		1,							// レンダーターゲット数
+		DXGI_FORMAT_UNKNOWN,			// デプスの有無
+		false,						// 反対デプス有無
+		10000
+	);
+
+
+	// メモリプールの作成
+	_efkMemoryPool = ::EffekseerRenderer::CreateSingleFrameMemoryPool(_efkRenderer->GetGraphicsDevice());
+	// コマンドリストの作成
+	_efkCmdList = ::EffekseerRenderer::CreateCommandList(_efkRenderer->GetGraphicsDevice(), _efkMemoryPool);
+
+	// エフェクトマネージャーの作成
+	_efkManager = ::Effekseer::Manager::Create(10000);// 最大インスタンス数
+
+	// 「系」を左手系にする（クライアント側の系に合わせる）
+	_efkManager->SetCoordinateSystem(Effekseer::CoordinateSystem::LH);
+
+	// 描画用インスタンスから描画機能を設定
+	_efkManager->SetSpriteRenderer(_efkRenderer->CreateSpriteRenderer());
+	_efkManager->SetRibbonRenderer(_efkRenderer->CreateRibbonRenderer());
+	_efkManager->SetRingRenderer(_efkRenderer->CreateRingRenderer());
+	_efkManager->SetTrackRenderer(_efkRenderer->CreateTrackRenderer());
+	_efkManager->SetModelRenderer(_efkRenderer->CreateModelRenderer());
+
+	// テクスチャ、モデル、カーブマテリアルの読込機能を設定
+	// ユーザー独自拡張可能、現在はファイルから読み込んでいる。
+	_efkManager->SetTextureLoader(_efkRenderer->CreateTextureLoader());
+	_efkManager->SetModelLoader(_efkRenderer->CreateModelLoader());
+	_efkManager->SetMaterialLoader(_efkRenderer->CreateMaterialLoader());
+	_efkManager->SetCurveLoader(Effekseer::MakeRefPtr<Effekseer::CurveLoader>());
+
+	// サウンドモジュールの設定
+	IXAudio2* xAudio2 = GetIXAudio2();
+	_efkSound = ::EffekseerSound::Sound::Create(xAudio2, 16, 16);
+
+	// 音再生用インスタンスから再生機能を指定
+	_efkManager->SetSoundPlayer(_efkSound->CreateSoundPlayer());
+
+	// サウンドデータの読み込み機能を設定する
+	// ユーザー独自で拡張できる。現在はファイルから読み込んでいる。
+	_efkManager->SetSoundLoader(_efkSound->CreateSoundLoader());
+
+	// Effekseerのカメラの同期
+	SyncronizeEffekseerCamera();
+
+	// エフェクトの読込
+	//_effect = Effekseer::Effect::Create(
+	//	_efkManager, 
+	//	(const EFK_CHAR*)L"effect/10/SimpleLaser.efk", 
+	//	1.0f, 
+	//	(const EFK_CHAR*)L"effect/10"
+	//);
+	// エフェクトの読込
+	_effect = Effekseer::Effect::Create(_efkManager, u"effect/distortion.efk");
+
+	return true;
+}
+
 }
 
 // ループ処理
