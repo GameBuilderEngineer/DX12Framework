@@ -481,8 +481,8 @@ HRESULT Dx12Wrapper::CreateSceneView() {
 	_mappedSceneData = nullptr;// マップ先を示すポインタ
 	result = _sceneConstBuff->Map(0, nullptr, (void**)&_mappedSceneData);//マップ
 
-	XMFLOAT3 eye(0, 15, -15);
-	XMFLOAT3 target(0, 15, 0);
+	XMFLOAT3 eye(0, 15, -30);
+	XMFLOAT3 target(0, 0, 0);
 	XMFLOAT3 up(0, 1, 0);
 	//auto worldMat = XMMatrixIdentity();
 	auto viewMat = XMMatrixLookAtLH(
@@ -658,7 +658,7 @@ void Dx12Wrapper::BeginDraw()
 	_cmdList->ClearDepthStencilView(dsvH, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	// 画面クリア
-	float clearColor[] = { 1.0f,1.0f,1.0f,1.0f };//白色
+	float clearColor[] = { 0.0f,0.0f,0.0f,1.0f };//白色
 	_cmdList->ClearRenderTargetView(rtvH, clearColor, 0, nullptr);
 
 	// ビューポート、シザー矩形のセット
