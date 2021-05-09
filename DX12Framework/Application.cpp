@@ -9,6 +9,10 @@
 #include <EffekseerRendererDX12.h>
 #include <EffekseerSoundXAudio2.h>
 
+#pragma comment(lib,"Effekseer.lib")
+#pragma comment(lib,"EffekseerRendererDX12.lib")
+#pragma comment(lib,"EffekseerSoundXAudio2.lib")
+#pragma comment(lib,"LLGI.lib")
 #ifdef _DEBUG
 #include<iostream>
 #endif
