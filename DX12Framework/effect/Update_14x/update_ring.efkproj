@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EffekseerProject>
+  <Root>
+    <Name>Root</Name>
+    <Children>
+      <Node>
+        <DrawingValues>
+          <Type>4</Type>
+          <Ring>
+            <ViewingAngle_Fixed>260</ViewingAngle_Fixed>
+          </Ring>
+        </DrawingValues>
+        <Name>Node</Name>
+        <Children />
+      </Node>
+      <Node>
+        <LocationValues>
+          <Fixed>
+            <Location>
+              <X>-6</X>
+            </Location>
+          </Fixed>
+        </LocationValues>
+        <DrawingValues>
+          <Type>4</Type>
+          <Ring>
+            <ViewingAngle>1</ViewingAngle>
+            <ViewingAngle_Fixed>260</ViewingAngle_Fixed>
+            <ViewingAngle_Random>
+              <Center>180</Center>
+              <Max>180</Max>
+              <Min>180</Min>
+            </ViewingAngle_Random>
+          </Ring>
+        </DrawingValues>
+        <Name>Node</Name>
+        <Children />
+      </Node>
+      <Node>
+        <LocationValues>
+          <Fixed>
+            <Location>
+              <X>6</X>
+            </Location>
+          </Fixed>
+        </LocationValues>
+        <DrawingValues>
+          <Type>4</Type>
+          <Ring>
+            <ViewingAngle>2</ViewingAngle>
+            <ViewingAngle_Fixed>260</ViewingAngle_Fixed>
+            <ViewingAngle_Easing>
+              <End>
+                <Center>90</Center>
+                <Max>90</Max>
+                <Min>90</Min>
+              </End>
+            </ViewingAngle_Easing>
+          </Ring>
+        </DrawingValues>
+        <Name>Node</Name>
+        <Children />
+      </Node>
+    </Children>
+  </Root>
+  <ToolVersion>1.43f</ToolVersion>
+  <Version>3</Version>
+  <StartFrame>0</StartFrame>
+  <EndFrame>120</EndFrame>
+  <IsLoop>True</IsLoop>
+</EffekseerProject>

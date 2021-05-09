@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<EffekseerProject>
+  <Root>
+    <Name>Root</Name>
+    <Children>
+      <Node>
+        <RendererCommonValues>
+          <Distortion>True</Distortion>
+          <DistortionIntensity>2</DistortionIntensity>
+        </RendererCommonValues>
+        <Name>Distortion</Name>
+        <Children />
+      </Node>
+      <Node>
+        <LocationValues>
+          <Fixed>
+            <Location>
+              <X>-3</X>
+            </Location>
+          </Fixed>
+        </LocationValues>
+        <DrawingValues>
+          <Type>5</Type>
+          <Model>
+            <Model>../Models/Sphare_Resized.fbx</Model>
+          </Model>
+        </DrawingValues>
+        <Name>Lighting</Name>
+        <Children />
+      </Node>
+      <Node>
+        <LocationValues>
+          <Fixed>
+            <Location>
+              <X>3</X>
+            </Location>
+          </Fixed>
+        </LocationValues>
+        <RendererCommonValues>
+          <ColorTexture>../Textures/img1.png</ColorTexture>
+          <Filter>0</Filter>
+          <Wrap>1</Wrap>
+        </RendererCommonValues>
+        <DrawingValues>
+          <Type>5</Type>
+          <Model>
+            <Model>../Models/Sphare_Resized.fbx</Model>
+            <NormalTexture>../Textures/Normal1.png</NormalTexture>
+          </Model>
+        </DrawingValues>
+        <Name>Lighting</Name>
+        <Children />
+      </Node>
+    </Children>
+  </Root>
+  <ToolVersion>1.43f</ToolVersion>
+  <Version>3</Version>
+  <StartFrame>0</StartFrame>
+  <EndFrame>120</EndFrame>
+  <IsLoop>True</IsLoop>
+</EffekseerProject>
