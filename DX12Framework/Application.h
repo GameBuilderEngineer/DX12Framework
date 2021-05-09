@@ -59,6 +59,12 @@ private:
 	// imguiの初期化
 	bool InitializeImgui();
 
+	// Effekseerの初期化
+	bool InitializeEffekseer();
+
+	// Effekseerのカメラの同期
+	void SyncronizeEffekseerCamera();
+
 public:
 	// Applicaitonのシングルインスタンスを得る
 	static Application& Instance();
