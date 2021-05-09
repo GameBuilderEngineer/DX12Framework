@@ -72,16 +72,85 @@ LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
+Application& Application::Instance() {
+	static Application instance;
+	return instance;
+}
+
+Application::Application()
+	: _windowClass{}
+	, _hwnd(nullptr)
+	, _dx12(nullptr)
+	, _pmdRenderer(nullptr)
+	, _pmdActor(nullptr)
+	, _show_demo_window(true)
+	, _show_another_window(false)
+{
+	_clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+}
+
+Application::~Application() {
+
+}
+
+bool Application::Init() {
+	// COMの初期化
+	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
+
+	CreateGameWindow(_hwnd, _windowClass);
+
+	DebugOutputFormatString("Show window test.\n");
+
+	std::string strModelPath = "Model/初音ミク.pmd";
+	//string strModelPath = "Model/hibiki/hibiki.pmd";
+	//string strModelPath = "Model/satori/satori.pmd";
+	//string strModelPath = "Model/reimu/reimu.pmd";
+	//string strModelPath = "Model/巡音ルカ.pmd";
+	//string strModelPath = "Model/初音ミクVer2.pmd";
+	//string strModelPath = "Model/初音ミクmetal.pmd";
+	//string strModelPath = "Model/咲音メイコ.pmd";
+	//string strModelPath = "Model/ダミーボーン.pmd";//NG
+	//string strModelPath = "Model/鏡音リン.pmd";
+	//string strModelPath = "Model/鏡音リン_act2.pmd";
+	//string strModelPath = "Model/カイト.pmd";
+	//string strModelPath = "Model/MEIKO.pmd";
+	//string strModelPath = "Model/亞北ネル.pmd";
+	//string strModelPath = "Model/弱音ハク.pmd";
+
+	// DirectX12ラッパー生成＆初期化
+	_dx12.reset(new Dx12Wrapper(_hwnd));
+	if (!_dx12->Initialize())
+		return false;
+
+	// XAudioの初期化
+	XAudio2Create(&g_xa2);
+	g_xa2->CreateMasteringVoice(&g_xa2_master);
+
+	// imguiの初期化
+	if (!InitializeImgui())
+		return false;
+
+	// Effekseerの初期化
+	if (!InitializeEffekseer())
+		return false;
+
+	// PMD用レンダラー&アクターの初期化
+	_pmdRenderer.reset(new PMDRenderer(*_dx12));
+	_pmdActor.reset(new PMDActor(strModelPath.c_str(), *_pmdRenderer));
+
+	return true;
+}
+
 // ゲームウィンドウの生成
 void Application::CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass)
 {
 	HINSTANCE hInst = GetModuleHandle(nullptr);
 
 	//ウィンドウクラス生成＆登録
-	windowClass.cbSize			= sizeof(WNDCLASSEX);
-	windowClass.lpfnWndProc		= (WNDPROC)WindowProcedure;	// コールバック関数の指定
-	windowClass.lpszClassName	= _T("DX12Framework");		// アプリケーションクラス名
-	windowClass.hInstance		= GetModuleHandle(0);		// ハンドルの取得
+	windowClass.cbSize = sizeof(WNDCLASSEX);
+	windowClass.lpfnWndProc = (WNDPROC)WindowProcedure;	// コールバック関数の指定
+	windowClass.lpszClassName = _T("DX12Framework");		// アプリケーションクラス名
+	windowClass.hInstance = GetModuleHandle(0);		// ハンドルの取得
 	RegisterClassEx(&windowClass);							// アプリケーションクラス
 
 	RECT wrc = { 0,0,window_width, window_height };			// ウィンドウサイズを決める
@@ -102,12 +171,32 @@ void Application::CreateGameWindow(HWND& hwnd, WNDCLASSEX& windowClass)
 		nullptr);					// 追加パラメータ
 }
 
-// ウィンドウサイズの取得
-SIZE Application::GetWindowSize()const {
-	SIZE ret;
-	ret.cx = window_width;
-	ret.cy = window_height;
-	return ret;
+// imguiの初期化
+bool Application::InitializeImgui()
+{
+	if (ImGui::CreateContext() == nullptr)
+	{
+		assert(0);
+		return false;
+	}
+
+	bool blnResult = ImGui_ImplWin32_Init(_hwnd);
+	if (!blnResult)
+	{
+		assert(0);
+		return false;
+	}
+
+	ImGui_ImplDX12_Init(_dx12->Device().Get(),	// DirectX12デバイス
+		NUM_FRAMES_IN_FLIGHT,					// 頂点バッファとインデックスバッファの複合構造体によりGPUの処理を待たずに次のコマンドリスト発行ができるようにしている（推定）
+		DXGI_FORMAT_R8G8B8A8_UNORM,				// 書き込み先RTVのフォーマット
+		_dx12->GetHeapForImgui().Get(),			// imgui用デスクリプタヒープ
+		_dx12->GetHeapForImgui()->GetCPUDescriptorHandleForHeapStart(),		// CPUハンドル
+		_dx12->GetHeapForImgui()->GetGPUDescriptorHandleForHeapStart());	// GPUハンドル
+
+	return true;
+}
+
 // Effekseerの初期化
 bool Application::InitializeEffekseer()
 {
@@ -217,174 +306,115 @@ void Application::Run()
 		// 全体の描画準備
 		_dx12->BeginDraw();
 
-		// PMD用の描画パイプラインに合わせる
-		_dx12->CommandList()->SetPipelineState(_pmdRenderer->GetPiplineState());
-		// ルートシグネチャをPMD用に合わせる
-		_dx12->CommandList()->SetGraphicsRootSignature(_pmdRenderer->GetRootSignature());
+			// PMD用の描画パイプラインに合わせる
+			_dx12->CommandList()->SetPipelineState(_pmdRenderer->GetPiplineState());
+			// ルートシグネチャをPMD用に合わせる
+			_dx12->CommandList()->SetGraphicsRootSignature(_pmdRenderer->GetRootSignature());
 
-		_dx12->CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			_dx12->CommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		_dx12->SetScene();
+			_dx12->SetScene();
 
-		_pmdActor->Update();
-		_pmdActor->Draw();
+			_pmdActor->Update();
+			_pmdActor->Draw();
 
-		// imgui 描画前処理
-		ImGui_ImplDX12_NewFrame();
-		ImGui_ImplWin32_NewFrame();
-		ImGui::NewFrame();
+			// imgui 描画前処理
+			ImGui_ImplDX12_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
 
-		// Demo window
-		if (_show_demo_window)
-			ImGui::ShowDemoWindow(&_show_demo_window);
+			// Demo window
+			if (_show_demo_window)
+				ImGui::ShowDemoWindow(&_show_demo_window);
 
-		// Simple Basic
-		{
-			ImGui::Begin("Rendering Test Menu");
-			ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
-			ImGui::End();
-		}
+			// Simple Basic
+			{
+				ImGui::Begin("Rendering Test Menu");
+				ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
+				ImGui::End();
+			}
 
-		// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-		{
-			static float f = 0.0f;
-			static int counter = 0;
+			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+			{
+				static float f = 0.0f;
+				static int counter = 0;
 
-			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-			ImGui::Checkbox("Demo Window", &_show_demo_window);      // Edit bools storing our window open/close state
-			ImGui::Checkbox("Another Window", &_show_another_window);
+				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+				ImGui::Checkbox("Demo Window", &_show_demo_window);      // Edit bools storing our window open/close state
+				ImGui::Checkbox("Another Window", &_show_another_window);
 
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-			ImGui::ColorEdit3("clear color", (float*)&_clear_color); // Edit 3 floats representing a color
+				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+				ImGui::ColorEdit3("clear color", (float*)&_clear_color); // Edit 3 floats representing a color
 
-			if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
-			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
+				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+					counter++;
+				ImGui::SameLine();
+				ImGui::Text("counter = %d", counter);
 
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::End();
-		}
+				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+				ImGui::End();
+			}
 
-		// Another Simple Window
-		if (_show_another_window)
-		{
-			ImGui::Begin("Another Window", &_show_another_window);
-			ImGui::Text("Helllo from another window!");
-			if (ImGui::Button("Close Me"))
-				_show_another_window = false;
-			ImGui::End();
-		}
+			// Another Simple Window
+			if (_show_another_window)
+			{
+				ImGui::Begin("Another Window", &_show_another_window);
+				ImGui::Text("Helllo from another window!");
+				if (ImGui::Button("Close Me"))
+					_show_another_window = false;
+				ImGui::End();
+			}
 
-		// Rendering
-		ImGui::Render();
+			// Rendering
+			ImGui::Render();
 
-		// コマンドリストへ描画情報をセット
-		_dx12->CommandList()->SetDescriptorHeaps(1, _dx12->GetHeapForImgui().GetAddressOf());	// imgui用デスクリプタをセット
-		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _dx12->CommandList().Get());		// コマンドリストへ描画情報をセット
+			// コマンドリストへ描画情報をセット
+			_dx12->CommandList()->SetDescriptorHeaps(1, _dx12->GetHeapForImgui().GetAddressOf());	// imgui用デスクリプタをセット
+			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _dx12->CommandList().Get());		// コマンドリストへ描画情報をセット
 
 		_dx12->EndDraw();
 		
 		// フリップ
 		_dx12->Swapchain()->Present(1,0);
+
+		time++;
 	}
-}
-
-bool Application::Init() {
-	auto result = CoInitializeEx(0, COINIT_MULTITHREADED);
-	CreateGameWindow(_hwnd,_windowClass);
-
-	DebugOutputFormatString("Show window test.\n");
-
-	std::string strModelPath = "Model/初音ミク.pmd";
-	//string strModelPath = "Model/hibiki/hibiki.pmd";
-	//string strModelPath = "Model/satori/satori.pmd";
-	//string strModelPath = "Model/reimu/reimu.pmd";
-	//string strModelPath = "Model/巡音ルカ.pmd";
-	//string strModelPath = "Model/初音ミクVer2.pmd";
-	//string strModelPath = "Model/初音ミクmetal.pmd";
-	//string strModelPath = "Model/咲音メイコ.pmd";
-	//string strModelPath = "Model/ダミーボーン.pmd";//NG
-	//string strModelPath = "Model/鏡音リン.pmd";
-	//string strModelPath = "Model/鏡音リン_act2.pmd";
-	//string strModelPath = "Model/カイト.pmd";
-	//string strModelPath = "Model/MEIKO.pmd";
-	//string strModelPath = "Model/亞北ネル.pmd";
-	//string strModelPath = "Model/弱音ハク.pmd";
-
-	// DirectX12ラッパー生成＆初期化
-	_dx12.reset(new Dx12Wrapper(_hwnd));
-	if (!_dx12->Initialize())
-		return false;
-
-	// imguiの初期化
-	if (!InitializeImgui())
-		return false;
-
-	// PMD用レンダラー&アクターの初期化
-	_pmdRenderer.reset(new PMDRenderer(*_dx12));
-	_pmdActor.reset(new PMDActor(strModelPath.c_str(), *_pmdRenderer));
-
-	return true;
-}
-
-// imguiの初期化
-bool Application::InitializeImgui()
-{
-	if (ImGui::CreateContext() == nullptr)
-	{
-		assert(0);
-		return false;
-	}
-
-	bool blnResult = ImGui_ImplWin32_Init(_hwnd);
-	if (!blnResult)
-	{
-		assert(0);
-		return false;
-	}
-
-	ImGui_ImplDX12_Init(_dx12->Device().Get(),	// DirectX12デバイス
-		NUM_FRAMES_IN_FLIGHT,					// 頂点バッファとインデックスバッファの複合構造体によりGPUの処理を待たずに次のコマンドリスト発行ができるようにしている（推定）
-		DXGI_FORMAT_R8G8B8A8_UNORM,				// 書き込み先RTVのフォーマット
-		_dx12->GetHeapForImgui().Get(),			// imgui用デスクリプタヒープ
-		_dx12->GetHeapForImgui()->GetCPUDescriptorHandleForHeapStart(),		// CPUハンドル
-		_dx12->GetHeapForImgui()->GetGPUDescriptorHandleForHeapStart());	// GPUハンドル
-
-	return true;
 }
 
 // 後処理
 void Application::Terminate() {
+
+	// Effekseerの解放
+	_efkManager.Reset();	// マネージャーの破棄
+	_efkSound.Reset();	// サウンド破棄
+	_efkRenderer.Reset();	// レンダラーの破棄
+
 	// Cleanup
 	ImGui_ImplDX12_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
+	// XAudio2の解放
+	if (g_xa2_master != nullptr)
+	{
+		g_xa2_master->DestroyVoice();
+		g_xa2_master = nullptr;
+	}
+	ES_SAFE_RELEASE(g_xa2);
+
 	UnregisterClass(_windowClass.lpszClassName, _windowClass.hInstance);
 	DxDebug _dx12->ReportD3DObject();
+
+	// COMの解放
+	CoUninitialize();
 }
 
-Application& Application::Instance() {
-	static Application instance;
-	return instance;
+// ウィンドウサイズの取得
+SIZE Application::GetWindowSize()const {
+	SIZE ret;
+	ret.cx = window_width;
+	ret.cy = window_height;
+	return ret;
 }
-
-Application::Application()
-	: _windowClass	{}
-	, _hwnd					(nullptr)
-	, _dx12					(nullptr)
-	, _pmdRenderer			(nullptr)
-	, _pmdActor				(nullptr)
-	, _show_demo_window		(true)
-	, _show_another_window	(false)
-{
-	_clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-}
-
-Application::~Application() {
-
-}
-
