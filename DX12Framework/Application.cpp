@@ -293,6 +293,8 @@ void Application::Run()
 	float angle			= 0.0f;
 	MSG msg				= {};
 	unsigned int frame	= 0;
+	bool shotFlg = false;
+	int32_t time = 0;
 	while (true)
 	{
 		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -302,10 +304,61 @@ void Application::Run()
 		if (msg.message == WM_QUIT) {
 			break;
 		}
+		BYTE keycode[256];
+		GetKeyboardState(keycode);
+		if (keycode[VK_SPACE] & 0x80) {
+			if (!shotFlg) {
+				if (_efkManager->Exists(_efkHandle)) {
+ 					_efkManager->StopEffect(_efkHandle);
+				}
+				// エフェクトの再生
+				_efkHandle = _efkManager->Play(_effect, 0, 10, 0);
+			}
+			shotFlg = true;
+		}
+		else {
+			shotFlg = false;
+		}
+		SyncronizeEffekseerCamera();
 
 		// 全体の描画準備
 		_dx12->BeginDraw();
 
+		// エフェクト描画
+		{
+			// フレーム開始時呼び出し
+			_efkMemoryPool->NewFrame();// 適切なバックバッファを選択
+
+			// Effekseer:コマンドリストを開始
+			EffekseerRendererDX12::BeginCommandList(_efkCmdList,_dx12->CommandList().Get());
+			_efkRenderer->SetCommandList(_efkCmdList);
+
+			auto efkpos = _efkManager->GetLocation(_efkHandle);
+			efkpos.X += 0.1f;
+			_efkManager->SetLocation(_efkHandle, efkpos);
+
+			// マネージャーの更新(時間更新)
+			_efkManager->Update();
+
+			// 時間を更新する
+			_efkRenderer->SetTime(time / 60.0f);
+
+			// 描画前処理
+			_efkRenderer->BeginRendering();
+
+			// エフェクト描画
+			_efkManager->Draw();
+
+			// 描画後処理
+			_efkRenderer->EndRendering();
+
+			// Effekseer:コマンドリストを終了
+			_efkRenderer->SetCommandList(nullptr);
+			EffekseerRendererDX12::EndCommandList(_efkCmdList);
+		}
+
+		// PMDモデル
+		{
 			// PMD用の描画パイプラインに合わせる
 			_dx12->CommandList()->SetPipelineState(_pmdRenderer->GetPiplineState());
 			// ルートシグネチャをPMD用に合わせる
@@ -317,7 +370,10 @@ void Application::Run()
 
 			_pmdActor->Update();
 			_pmdActor->Draw();
+		}
 
+		// imgui
+		{
 			// imgui 描画前処理
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
@@ -326,7 +382,6 @@ void Application::Run()
 			// Demo window
 			if (_show_demo_window)
 				ImGui::ShowDemoWindow(&_show_demo_window);
-
 			// Simple Basic
 			{
 				ImGui::Begin("Rendering Test Menu");
@@ -373,6 +428,7 @@ void Application::Run()
 			// コマンドリストへ描画情報をセット
 			_dx12->CommandList()->SetDescriptorHeaps(1, _dx12->GetHeapForImgui().GetAddressOf());	// imgui用デスクリプタをセット
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), _dx12->CommandList().Get());		// コマンドリストへ描画情報をセット
+		}
 
 		_dx12->EndDraw();
 		
