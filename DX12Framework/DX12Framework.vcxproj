@@ -104,7 +104,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(DXTEX_DIR)\Bin\Desktop_2019_Win10\x64\Debug;$(EFK_ROOT_DIR)\Debug;$(EFK_ROOT_DIR)\EffekseerRendererDX12\Debug;$(EFK_ROOT_DIR)\3rdParty\LLGI\src\Debug;$(EFK_ROOT_DIR)\EffekseerSoundXAudio2\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DXTEX_DIR)\Bin\Desktop_2019_Win10\x64\Debug;$(EFK_ROOT_DIR)\Effekseer\Debug;$(EFK_ROOT_DIR)\EffekseerRendererDX12\Debug;$(EFK_ROOT_DIR)\EffekseerSoundXAudio2\Debug;$(EFK_ROOT_DIR)\3rdParty\LLGI\src\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,7 +141,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(DXTEX_DIR)\Bin\Desktop_2019_Win10\x64\Release;$(EFK_ROOT_DIR)\Release;$(EFK_ROOT_DIR)\EffekseerRendererDX12\Release;$(EFK_ROOT_DIR)\3rdParty\LLGI\src\Release;$(EFK_ROOT_DIR)\EffekseerSoundXAudio2\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DXTEX_DIR)\Bin\Desktop_2019_Win10\x64\Release;$(EFK_ROOT_DIR)\Effekseer\Release;$(EFK_ROOT_DIR)\EffekseerRendererDX12\Release;$(EFK_ROOT_DIR)\EffekseerSoundXAudio2\Release;$(EFK_ROOT_DIR)\3rdParty\LLGI\src\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
